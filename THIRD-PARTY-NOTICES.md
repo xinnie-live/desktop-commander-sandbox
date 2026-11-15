@@ -48,6 +48,15 @@ superset; listing a component does not assert it is linked into every image.
 The libraries are not modified by this project. The upstream build recipe
 contains upstream source modifications and build options.
 
+For libtiff 4.7.2, the manifest uses the official release tarball from the
+[upstream primary download site](https://libtiff.gitlab.io/libtiff/releases/v4.7.2.html)
+instead of GitLab's generated tag archive, which returned HTTP 406 on GitHub runners.
+The 573 files shared by the two archives were compared byte-for-byte and match;
+the release tarball includes generated distribution files and omits some repository
+metadata, archived tools and maintainer/test files. This is a source-download
+substitution for the same version, not a change to the installed native library.
+The original upstream build recipe is preserved unchanged.
+
 Each Release also supplies
 `desktop-commander-sandbox-third-party-sources-<version>.tar.gz` and its SHA-256
 file. This archive contains the original native source archives and patches
