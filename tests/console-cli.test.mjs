@@ -238,6 +238,7 @@ esac
     assert.equal(JSON.parse(await readFile(profileFile, 'utf8')).workspaces.default.mounts[0].readOnly, true);
 
     await writeFile(state, 'stopped\n');
+    await rm(proxyLog, { force: true });
     const proxied = spawn(process.execPath, [join(project, 'scripts/console.mjs'), 'start', '--proxy', 'manual', '--yes', '--no-open'], {
       cwd: project, env, stdio: ['pipe', 'pipe', 'pipe'],
     });
