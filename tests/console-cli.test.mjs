@@ -241,26 +241,31 @@ esac
     const proxied = spawn(process.execPath, [join(project, 'scripts/console.mjs'), 'start', '--proxy', 'manual', '--yes', '--no-open'], {
       cwd: project, env, stdio: ['pipe', 'pipe', 'pipe'],
     });
-    proxied.stdin.end('http://127.0.0.1:18080\n');
-    await new Promise((resolveReady, rejectReady) => {
-      const timer = setTimeout(() => rejectReady(new Error('CLI controller did not open.')), 8000);
-      proxied.stdout.on('data', (chunk) => {
-        if (!chunk.toString('utf8').includes('Desktop Commander Sandbox console:')) return;
-        clearTimeout(timer);
-        resolveReady();
+    try {
+      proxied.stdin.end('http://127.0.0.1:18080\n');
+      await new Promise((resolveReady, rejectReady) => {
+        const timer = setTimeout(() => rejectReady(new Error('CLI controller did not open.')), 8000);
+        proxied.stdout.on('data', (chunk) => {
+          if (!chunk.toString('utf8').includes('Desktop Commander Sandbox console:')) return;
+          clearTimeout(timer);
+          resolveReady();
+        });
+        proxied.once('error', rejectReady);
       });
-      proxied.once('error', rejectReady);
-    });
-    let observed = '';
-    for (let attempt = 0; attempt < 100; attempt += 1) {
-      observed = await readFile(proxyLog, 'utf8').catch(() => '');
-      if (observed.trim()) break;
-      await new Promise((resolveWait) => setTimeout(resolveWait, 20));
+      let observed = '';
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        observed = await readFile(proxyLog, 'utf8').catch(() => '');
+        if (observed.endsWith('\n')) break;
+        await new Promise((resolveWait) => setTimeout(resolveWait, 20));
+      }
+      assert.equal(observed.trim(), 'http://host.docker.internal:18080/');
+    } finally {
+      if (proxied.exitCode === null && proxied.signalCode === null) {
+        const closed = new Promise((resolveClose) => proxied.once('close', resolveClose));
+        proxied.kill('SIGTERM');
+        await closed;
+      }
     }
-    assert.equal(observed.trim(), 'http://host.docker.internal:18080/');
-    const closed = new Promise((resolveClose) => proxied.once('close', resolveClose));
-    proxied.kill('SIGTERM');
-    await closed;
   } finally {
     await rm(root, { recursive: true, force: true });
   }
