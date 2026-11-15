@@ -1,0 +1,58 @@
+services:
+  remote-device:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # BuildKit predefined proxy args are not referenced in Dockerfile instructions,
+      # so they are not baked into the image or retained in build history/cache.
+      args:
+        HTTP_PROXY: ${REMOTE_DEVICE_HTTP_PROXY:-}
+        HTTPS_PROXY: ${REMOTE_DEVICE_HTTPS_PROXY:-}
+        NO_PROXY: "${REMOTE_DEVICE_NO_PROXY:-localhost,127.0.0.1,::1,host.docker.internal}"
+      extra_hosts:
+        - host.docker.internal:host-gateway
+    image: ghcr.io/xinnie-live/desktop-commander-sandbox:0.0.0-dev
+    init: true
+    restart: "no"
+    logging:
+      driver: none
+    group_add:
+      - ${REMOTE_DEVICE_DOCKER_GROUP_GID:-10001}
+    environment:
+      REMOTE_DEVICE_WORKSPACE_GID: ${REMOTE_DEVICE_WORKSPACE_GID:-}
+      DESKTOP_COMMANDER_DISABLE_TELEMETRY: "1"
+      NODE_USE_ENV_PROXY: "1"
+      HTTP_PROXY: ${REMOTE_DEVICE_HTTP_PROXY:-}
+      HTTPS_PROXY: ${REMOTE_DEVICE_HTTPS_PROXY:-}
+      http_proxy: ${REMOTE_DEVICE_HTTP_PROXY:-}
+      https_proxy: ${REMOTE_DEVICE_HTTPS_PROXY:-}
+      NO_PROXY: "${REMOTE_DEVICE_NO_PROXY:-localhost,127.0.0.1,::1,host.docker.internal}"
+      no_proxy: "${REMOTE_DEVICE_NO_PROXY:-localhost,127.0.0.1,::1,host.docker.internal}"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=256m,uid=10002,gid=10002,mode=1777
+    volumes:
+      - type: volume
+        source: device-state
+        target: /var/lib/remote-device
+      - type: volume
+        source: tool-config
+        target: /home/tool
+      - type: bind
+        source: ${REMOTE_DEVICE_WORKSPACE_PATH:-./sandbox-workspace/default/work}
+        target: /workspace
+        read_only: ${REMOTE_DEVICE_WORKSPACE_READ_ONLY:-false}
+        bind:
+          create_host_path: false
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
+volumes:
+  device-state:
+  # Tool home (/home/tool). Keep the volume key stable for existing installs.
+  tool-config:

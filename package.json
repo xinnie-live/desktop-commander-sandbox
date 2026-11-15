@@ -1,0 +1,75 @@
+{
+  "name": "desktop-commander-sandbox",
+  "version": "0.0.0-dev",
+  "private": true,
+  "description": "Run Desktop Commander Remote in a hardened Docker sandbox: let ChatGPT / Claude on the web process files, organize documents, and run scripts in the local folders you choose.",
+  "license": "MIT",
+  "author": "Xin Nie",
+  "homepage": "https://github.com/xinnie-live/desktop-commander-sandbox#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xinnie-live/desktop-commander-sandbox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xinnie-live/desktop-commander-sandbox/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "desktop-commander",
+    "chatgpt",
+    "claude",
+    "docker",
+    "sandbox",
+    "ai-agent",
+    "ai-coding",
+    "remote-device",
+    "local-first",
+    "security"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "test:proxy": "node --test tests/system-proxy.test.mjs",
+    "test:compose-version": "node --test tests/compose-version.test.mjs",
+    "test:console": "node --test tests/console-http.test.mjs",
+    "test:mount-apply": "node --test tests/console-mount-apply.test.mjs",
+    "test:workspace": "node --test tests/workspace-selection.test.mjs",
+    "test:mounts": "node --test tests/mount-compose.test.mjs tests/workspace-settings.test.mjs",
+    "test:product-readiness": "node --test tests/product-readiness.test.mjs",
+    "test:run-logs": "node --test tests/console-run-log.test.mjs",
+    "test:docker-host": "node scripts/verify-host-runtime.mjs",
+    "remote-device:package": "node scripts/package-release.mjs",
+    "remote-device:doctor": "node scripts/console.mjs doctor",
+    "remote-device:dashboard": "node scripts/console.mjs dashboard",
+    "remote-device:status": "node scripts/console.mjs status",
+    "remote-device:workspace": "node scripts/console.mjs workspace",
+    "remote-device:mount": "node scripts/console.mjs mount",
+    "remote-device:resources": "node scripts/console.mjs resources",
+    "remote-device:storage": "node scripts/console.mjs storage",
+    "remote-device:logs": "node scripts/console.mjs logs",
+    "remote-device:pull": "node scripts/console.mjs pull",
+    "remote-device:build": "node scripts/console.mjs build",
+    "remote-device:start": "node scripts/console.mjs start",
+    "remote-device:stop": "node scripts/console.mjs stop",
+    "remote-device:third-party": "node scripts/package-third-party.mjs",
+    "test:dependencies": "sh scripts/smoke-dependencies.sh",
+    "remote-device:notices": "node scripts/third-party-notices.mjs"
+  },
+  "dependencies": {
+    "@wonderwhy-er/desktop-commander": "0.3.3"
+  },
+  "overrides": {
+    "uuid": "11.1.1",
+    "zod": "4.6.7",
+    "@wonderwhy-er/desktop-commander": {
+      "node-forge": "1.4.3",
+      "glob": "14.0.6"
+    },
+    "hono": "4.13.18",
+    "@hono/node-server": "2.1.8"
+  },
+  "packageManager": "npm@10.9.4"
+}

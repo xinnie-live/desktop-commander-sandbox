@@ -1,0 +1,57 @@
+[
+  {
+    "name": "@puppeteer/browsers",
+    "version": "3.2.6",
+    "license": "Apache-2.0"
+  },
+  {
+    "name": "buffers",
+    "version": "0.1.1",
+    "license": "MIT/X11"
+  },
+  {
+    "name": "caffeinate",
+    "version": "1.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "chainsaw",
+    "version": "0.1.0",
+    "license": "MIT/X11"
+  },
+  {
+    "name": "enumify",
+    "version": "1.0.4",
+    "license": "MIT"
+  },
+  {
+    "name": "options-to-args",
+    "version": "0.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "protostar",
+    "version": "0.0.1",
+    "license": "MIT"
+  },
+  {
+    "name": "puppeteer",
+    "version": "25.16.0",
+    "license": "Apache-2.0"
+  },
+  {
+    "name": "puppeteer-core",
+    "version": "25.16.0",
+    "license": "Apache-2.0"
+  },
+  {
+    "name": "saxes",
+    "version": "5.0.1",
+    "license": "ISC"
+  },
+  {
+    "name": "tr46",
+    "version": "0.0.3",
+    "license": "MIT"
+  }
+]

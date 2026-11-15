@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Desktop Commander Sandbox · Local Control</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="wordmark" href="/" aria-label="Desktop Commander Sandbox 首页"><span class="brand-mark" aria-hidden="true">D</span><span>Desktop Commander Sandbox</span></a>
+    <div class="topbar-actions">
+      <button class="language-toggle" id="language-toggle" type="button" data-i18n-ignore aria-label="Switch language to Chinese">中文</button>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to dark theme" title="Switch to dark theme">
+        <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.8 8.8 0 1 0 20.4 15.2Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2.5v2M12 19.5v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2.5 12h2m15 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="overview" aria-labelledby="page-title">
+      <div class="overview-copy">
+        <p class="eyebrow">设备状态</p>
+        <h1 id="page-title"><span class="status-dot" id="project-dot" aria-hidden="true"></span><span id="project-state">正在读取</span></h1>
+        <p class="lead">启动会尝试恢复已保存的设备会话；停止会关闭本机容器并断开远程工具，但会保留本机状态和云端授权。云端在线状态请在 ChatGPT、Claude 或 Desktop Commander 中确认。</p>
+        <p class="setup-hint" id="status-freshness" role="status" data-i18n-ignore hidden></p>
+        <p class="project-meta" hidden>当前项目 <code id="project-name">—</code></p>
+        <p class="workspace-current"><span>当前工作区</span><code id="workspace-name">default</code></p>
+        <p class="setup-hint" id="build-guide" hidden>第 1 步：准备镜像（下载或源码构建，二选一）。完成后再启动设备。</p>
+      </div>
+      <div class="primary-actions" aria-label="项目操作">
+        <button class="button button-primary" id="build-button" type="button" hidden>准备镜像</button>
+        <button class="button button-primary" id="start-button" data-action="start" type="button" hidden>启动设备</button>
+        <button class="button button-stop" id="stop-button" data-action="stop" type="button" hidden>停止设备</button>
+        <button class="button button-secondary" id="image-options-button" type="button" hidden>镜像选项</button>
+        <button class="button button-secondary" id="network-button" type="button">网络设置</button>
+        <button class="button button-secondary" id="connectivity-button" type="button">连接状态</button>
+      </div>
+    </section>
+
+    <p class="notice" id="notice" role="status" aria-live="polite" hidden></p>
+
+    <div class="dashboard-grid">
+    <div class="workspace-column">
+    <section class="management-section" aria-labelledby="management-title">
+      <div class="section-heading workspace-heading">
+        <div><h2 id="management-title">工作区</h2><p>选择已保存的文件夹组合，或在弹窗中管理工作区。</p></div>
+        <div class="workspace-toolbar">
+          <span id="workspace-current-label" class="workspace-current-label" hidden><strong id="workspace-current-name" data-i18n-ignore></strong><small id="workspace-current-meta"></small></span>
+          <select id="workspace-select" class="management-input" aria-label="选择工作区" aria-hidden="true" tabindex="-1" hidden></select>
+          <div class="workspace-dropdown" id="workspace-dropdown" hidden>
+            <button class="button button-secondary workspace-dropdown-trigger" id="workspace-dropdown-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="workspace-dropdown-options">
+              <span class="workspace-dropdown-current" id="workspace-dropdown-current"></span>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="workspace-dropdown-options" id="workspace-dropdown-options" role="listbox" aria-label="选择工作区" hidden></div>
+          </div>
+          <button class="button button-secondary" id="workspace-select-button" type="button">切换</button>
+          <button class="button button-secondary" id="workspace-edit-button" type="button">编辑</button>
+          <button class="button button-secondary" id="workspace-new-button" type="button">新建</button>
+        </div>
+      </div>
+      <div class="management-card">
+        <p class="field-help" id="workspace-help">切换工作区会恢复该工作区保存的文件夹和权限；设备登录状态沿用。</p>
+      </div>
+      <section class="boundary-section" aria-labelledby="boundary-title">
+      <div class="section-heading boundary-heading"><h3 id="boundary-title">已生效</h3><span id="active-mount-count">—</span></div>
+      <div id="workspace-primary-boundary" class="boundary-row"><span class="folder-glyph" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3.5 6.5h6l2 2h9v9.5a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 18z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3.5 9h17" stroke="currentColor" stroke-width="1.7"/></svg></span><div class="boundary-details"><strong id="workspace-folder-name">sandbox-workspace</strong><small class="path-value"><span>本机</span><code id="workspace-local-path">sandbox-workspace</code></small><small class="path-value"><span>容器</span><code>/workspace</code></small></div><span class="access access-write" id="workspace-access-label">读写</span></div>
+      <div id="extra-mount-boundaries"></div>
+      </section>
+      <section class="pending-mounts" id="pending-mounts-section" aria-labelledby="pending-mounts-title" hidden>
+        <div class="section-heading pending-heading"><h3 id="pending-mounts-title">待应用</h3><span id="pending-mount-count"></span></div>
+        <ul class="pending-mount-list" id="pending-mounts-list"></ul>
+        <div class="pending-actions"><span id="pending-mount-note">应用后设备最多重启一次。</span><div class="mount-actions">
+          <button class="button button-secondary" id="mount-reset-button" type="button" hidden>撤销</button>
+          <button class="button button-primary" id="mount-apply-button" type="button" disabled>应用更改</button>
+        </div></div>
+      </section>
+      <p class="workspace-warning">所选文件夹及子内容都会按权限开放给 Remote Device。避免选择主目录、磁盘根目录、凭据目录或含私人资料的父文件夹。</p>
+    </section>
+
+    </div>
+    <aside class="side-column" aria-label="运行状态与资源">
+    <section class="output-section" aria-labelledby="output-title">
+      <div class="section-heading output-heading"><div><h2 id="output-title">运行记录</h2><p id="current-run-label">启动设备后，这里会显示本次运行。</p></div><span class="output-state" id="output-state">尚无运行记录</span></div>
+      <pre class="current-log-preview" id="current-log-preview" role="log" aria-live="polite">暂无本次运行日志。</pre>
+      <div class="run-log-entry"><span>每次启动会单独保存日志，可查看历史记录。</span><button class="button button-secondary" id="logs-open-button" type="button">查看日志</button></div>
+      <section class="resource-section" aria-labelledby="resource-title">
+      <div class="section-heading resource-heading"><h2 id="resource-title">容器资源</h2><time class="resource-updated" id="resource-updated" hidden></time></div>
+      <div class="resource-metrics" id="resource-metrics" hidden>
+        <div class="resource-metric"><span class="resource-label">CPU 使用量</span><strong class="resource-value" id="cpu-value">—</strong></div>
+        <div class="resource-metric"><span class="resource-label">内存使用量</span><strong class="resource-value" id="memory-value">—</strong></div>
+      </div>
+      <p class="resource-empty" id="resource-empty">设备运行后显示 CPU 和内存用量。</p>
+      <p class="resource-note" id="resource-limit">未为容器单独设置 CPU / 内存上限 · /tmp 临时空间上限：256 MB</p>
+      <div class="resource-actions">
+        <button class="button button-secondary" id="more-resource-details" type="button">更多详情</button>
+      </div>
+      </section>
+    </section>
+    </aside>
+    </div>
+  </main>
+
+  <dialog class="confirm-dialog diagnostics-dialog connection-dialog" id="connectivity-dialog" aria-labelledby="connection-title" aria-describedby="connectivity-help">
+    <div class="dialog-scroll">
+      <p class="eyebrow">Remote Device</p>
+      <div class="section-heading"><div><h2 id="connection-title">连接状态</h2><p>本机控制台只能确认容器状态，无法读取云端在线状态。</p></div></div>
+      <div class="connection-local-state"><span>本机容器</span><strong id="connection-local-status">正在读取</strong></div>
+      <div class="connection-state-list">
+        <section><strong>启动并尝试重连</strong><p>启动本机容器，并尝试恢复已保存的设备会话。首次使用或授权失效时，请在官方页面自行核对并授权。</p></section>
+        <section><strong>停止并断开</strong><p>停止本机容器后，远程连接会断开；本地设备状态和授权会保留。再次启动会尝试恢复连接，但不会撤销云端授权。</p></section>
+      </div>
+      <p class="boundary-note" id="connectivity-help">“设备运行中”只表示本机容器正在运行，不代表已经登录、完成授权、加入设备频道或在云端显示在线。请在 ChatGPT、Claude 或 Desktop Commander 设备页确认。</p>
+      <div class="dialog-actions"><button class="button button-secondary" id="connectivity-close" type="button">关闭</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog workspace-dialog workspace-edit-dialog" id="workspace-edit-dialog" aria-labelledby="workspace-edit-title" aria-describedby="workspace-edit-description">
+    <form id="workspace-edit-form">
+      <div class="workspace-edit-scroll">
+        <p class="eyebrow" id="workspace-edit-eyebrow">工作区设置</p>
+        <h2 id="workspace-edit-title">编辑工作区</h2>
+        <p id="workspace-edit-description">修改显示名称、主文件夹、额外挂载和访问权限。显示名称只用于识别，不会改变工作区编号。</p>
+        <label class="field-label" for="workspace-edit-label">显示名称</label>
+        <input class="management-input" id="workspace-edit-label" name="label" type="text" maxlength="80" autocomplete="off" required>
+        <label class="field-label workspace-edit-folder-label" for="workspace-edit-folder-button">主文件夹（/workspace）</label>
+        <div class="workspace-edit-mount-item workspace-edit-primary-item">
+          <div class="workspace-edit-mount-details">
+            <strong id="workspace-edit-folder-name"></strong>
+            <code id="workspace-edit-local-path"></code>
+            <span>/workspace</span>
+          </div>
+          <div class="workspace-edit-mount-controls workspace-edit-primary-controls">
+            <button class="button button-secondary" id="workspace-edit-folder-button" type="button">更换文件夹…</button>
+            <label class="permission-toggle permission-toggle-compact" for="workspace-edit-access">
+              <input id="workspace-edit-access" name="readOnly" type="checkbox" aria-label="允许容器写入主文件夹">
+              <span><strong>写入</strong></span>
+            </label>
+          </div>
+        </div>
+        <p class="field-help" id="workspace-edit-folder-help">本机完整路径仅在控制台显示；更换文件夹不会移动文件。</p>
+        <div class="extra-mounts edit-mounts" id="workspace-edit-mounts" aria-labelledby="extra-mounts-title">
+          <div class="extra-mounts-heading"><h3 id="extra-mounts-title">额外挂载</h3><span id="workspace-edit-mount-count">0 / 8</span></div>
+          <p class="field-help">可以为这个工作区添加多个文件夹并分别设置权限。新建的额外挂载默认只读。</p>
+          <button class="button button-secondary workspace-browse-button" id="workspace-pick-button" type="button">添加文件夹…</button>
+          <ul class="mount-list workspace-edit-mount-list" id="workspace-edit-mount-list" aria-live="polite"></ul>
+        </div>
+        <p class="workspace-edit-status" id="workspace-edit-status" role="status" aria-live="polite" hidden></p>
+        <div class="workspace-profile-actions dialog-profile-actions">
+          <button class="button button-stop" id="workspace-delete-button" type="button">删除工作区</button>
+        </div>
+      </div>
+      <div class="dialog-actions workspace-edit-actions">
+        <button class="button button-secondary" id="workspace-edit-cancel" type="button">取消</button>
+        <button class="button button-primary" id="workspace-edit-save" type="submit">保存更改</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog workspace-dialog workspace-create-dialog" id="workspace-create-dialog" aria-labelledby="workspace-create-title" aria-describedby="workspace-create-description">
+    <form class="workspace-create" id="workspace-create-form">
+      <div class="workspace-create-scroll">
+        <p class="eyebrow">工作区</p>
+        <h2 id="workspace-create-title">新建工作区</h2>
+        <p id="workspace-create-description">保存独立工作区，不会切换当前工作区或影响正在运行的设备；设备登录状态会沿用。</p>
+        <label class="field-label" for="workspace-new-name">工作区名称</label>
+        <input class="management-input" id="workspace-new-name" name="workspace" type="text" maxlength="28" autocomplete="off" spellcheck="false" placeholder="例如 project-notes" required aria-describedby="workspace-name-help">
+        <p class="field-help" id="workspace-name-help">1–28 个字符，只用字母、数字、下划线或连字符；大写会转成小写。</p>
+        <section class="workspace-create-folders" aria-labelledby="workspace-create-folders-title">
+          <div class="workspace-create-folders-heading">
+            <div><h3 id="workspace-create-folders-title">工作区文件夹</h3><p class="field-help">逐个选择文件夹：第一项映射到 /workspace，其余作为额外挂载。权限保存在此工作区，切换后生效。</p></div>
+            <span id="workspace-create-folder-count">0 / 9</span>
+          </div>
+          <button class="button button-secondary workspace-create-pick" id="workspace-create-pick" type="button">从电脑选择文件夹…</button>
+          <ul class="workspace-create-folder-list" id="workspace-create-folder-list" aria-live="polite"></ul>
+          <p class="field-help workspace-create-folder-empty" id="workspace-create-folder-empty">不选文件夹时，会在项目 sandbox-workspace/ 下创建默认目录。</p>
+        </section>
+      </div>
+      <p class="field-help workspace-create-status" id="workspace-create-status" role="status" aria-live="polite" hidden></p>
+      <div class="dialog-actions">
+        <button class="button button-secondary" id="workspace-create-cancel" type="button">取消</button>
+        <button class="button button-primary" id="workspace-create-button" type="submit">保存工作区</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog" id="workspace-delete-dialog" aria-labelledby="workspace-delete-title" aria-describedby="workspace-delete-description">
+    <form method="dialog">
+      <p class="eyebrow">工作区管理</p>
+      <h2 id="workspace-delete-title">删除这个工作区？</h2>
+      <p id="workspace-delete-description"></p>
+      <div class="workspace-confirm-details"><strong id="workspace-delete-name"></strong><span id="workspace-delete-effect"></span></div>
+      <div class="dialog-actions">
+        <button class="button button-secondary" value="cancel">保留工作区</button>
+        <button class="button button-stop" id="workspace-delete-confirm" value="confirm">删除工作区</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog diagnostics-dialog" id="diagnostics-dialog" aria-labelledby="diagnostics-title" aria-describedby="diagnostics-description">
+    <div class="dialog-scroll">
+      <p class="eyebrow">启动前检查</p>
+      <div class="section-heading"><div><h2 id="diagnostics-title">本机运行条件</h2><p id="diagnostics-updated">启动前会自动检查；若检查未通过，此处会显示问题和处理方法。</p></div><span class="output-state" id="diagnostics-summary" role="status" aria-live="polite"></span></div>
+      <p class="boundary-note" id="diagnostics-description">检查只读取本机 Docker、项目配置和文件夹状态；不会安装软件、启动设备或访问云端。</p>
+      <ul class="diagnostics-list" id="diagnostics-list" aria-live="polite" aria-busy="false"></ul>
+      <button class="diagnostics-toggle" id="diagnostics-toggle" type="button" aria-expanded="true" hidden>仅显示需关注项</button>
+      <div class="dialog-actions"><button class="button button-secondary" id="diagnostics-close" type="button">关闭</button><button class="button button-secondary" id="diagnostics-retry" type="button">重新检查本机条件</button><button class="button button-primary" id="diagnostics-start-button" type="button" hidden disabled>继续启动设备</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog logs-dialog" id="logs-dialog" aria-labelledby="logs-title">
+    <div class="dialog-scroll">
+      <p class="eyebrow">本机运行记录</p>
+      <div class="section-heading logs-heading"><div><h2 id="logs-title">设备日志</h2><p id="logs-summary">每次设备启动保存一份，按工作区和时间区分。</p></div><button class="button button-secondary" id="logs-refresh" type="button">刷新</button></div>
+      <div class="logs-layout">
+        <nav class="logs-history" aria-label="历史运行记录"><h3>历史运行</h3><ul id="logs-list"></ul></nav>
+        <div class="logs-detail"><p class="field-help" id="logs-selected-label">选择一条记录查看。</p><pre class="output logs-output" id="log-content" role="log" aria-live="polite">读取日志后显示内容。</pre></div>
+      </div>
+      <p class="field-help">日志保存在本机应用日志目录，不按日期过期；最多保留最近 7 份，每份最多 10 MB。完整输出可能包含授权信息、凭据、工具参数和结果；超出份数时仅删除本应用创建的最旧日志文件，不扫描或清理其他文件夹。</p>
+      <div class="dialog-actions"><button class="button button-secondary" id="logs-close" type="button">关闭</button></div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog" id="image-setup-dialog" aria-labelledby="image-setup-title">
+    <div class="dialog-scroll">
+      <h2 id="image-setup-title">准备镜像</h2>
+      <p>选择一种方式即可。准备完成后，返回首页点击“启动设备”。已有镜像时无需重复准备。</p>
+      <p id="development-image-note" class="setup-hint">当前是开发版，尚无已发布镜像，请选择“从源码构建”。</p>
+      <p>下载镜像：获取已发布的运行环境。源码构建：在本机制作相同用途的运行环境，通常需要更长时间。</p>
+      <div class="dialog-actions">
+        <button class="button button-primary" id="download-image-button" type="button" disabled>下载镜像</button>
+        <button class="button button-secondary" id="source-build-button" type="button">从源码构建</button>
+        <button class="button button-secondary" id="image-setup-close" type="button">关闭</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog authorization-dialog" id="authorization-dialog" aria-labelledby="authorization-title" aria-describedby="authorization-description">
+    <div class="dialog-scroll">
+      <p class="eyebrow">Remote Device</p>
+      <h2 id="authorization-title">需要批准这台设备</h2>
+      <p id="authorization-description">请打开官方授权页面，核对显示的设备码后自行批准。完整设备输出会保存在本机运行日志。</p>
+      <div class="authorization-code-block"><span>本次设备码</span><strong id="authorization-code" data-i18n-ignore></strong></div>
+      <div class="authorization-feedback" aria-live="polite">
+        <strong id="authorization-state">等待你在官方页面完成授权</strong>
+        <p id="authorization-feedback-detail">控制台不会代为批准，也无法仅凭本机容器状态确认授权结果。</p>
+      </div>
+      <div class="dialog-actions">
+        <button class="button button-secondary" id="authorization-close" type="button">关闭</button>
+        <a class="button button-primary" id="authorization-link" target="_blank" rel="noopener noreferrer">打开授权页面</a>
+      </div>
+      <button class="button button-secondary authorization-check" id="authorization-check" type="button" hidden>我已完成授权，返回控制台</button>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog resource-dialog" id="resource-details-dialog" aria-labelledby="resource-details-title">
+    <div class="dialog-scroll">
+      <p class="eyebrow">Docker</p>
+      <div class="section-heading"><div><h2 id="resource-details-title">更多资源详情</h2><p>网络、磁盘读写与持久化数据卷占用。</p></div><button class="button button-secondary" id="resource-details-close" type="button">关闭</button></div>
+      <div class="resource-detail-grid">
+        <div class="resource-detail"><span class="resource-detail-label">网络接收 / 发送</span><strong class="resource-detail-value" id="network-io-value">—</strong></div>
+        <div class="resource-detail"><span class="resource-detail-label">磁盘读取 / 写入</span><strong class="resource-detail-value" id="block-io-value">—</strong></div>
+        <div class="resource-detail"><span class="resource-detail-label">进程数</span><strong class="resource-detail-value" id="process-count-value">—</strong></div>
+        <div class="resource-detail"><span class="resource-detail-label">临时空间上限</span><strong class="resource-detail-value">256 MB · 不持久化</strong></div>
+      </div>
+      <section class="storage-detail" aria-labelledby="storage-detail-title">
+        <div class="storage-detail-heading"><strong id="storage-detail-title">持久化数据卷总占用</strong><button class="button button-secondary" id="refresh-storage" type="button" disabled>更新</button></div>
+        <strong class="storage-detail-value" id="storage-value" aria-live="polite">尚未更新</strong>
+        <div class="storage-breakdown" id="storage-breakdown">
+          <span><small>设备状态卷</small><strong id="device-state-storage">—</strong></span>
+          <span><small>工具家目录卷</small><strong id="tool-home-storage">—</strong></span>
+        </div>
+        <div class="storage-detail-footer"><span>不含镜像和所选本机文件夹</span><span id="storage-updated" role="status" aria-live="polite">按需读取</span></div>
+      </section>
+      <p class="field-help resource-disclaimer" id="resource-disclaimer">CPU、内存与 I/O 数据由 Docker 提供；部分 Docker 主机可能不支持个别指标。</p>
+    </div>
+  </dialog>
+
+  <dialog class="confirm-dialog" id="stop-dialog" aria-labelledby="stop-title" aria-describedby="stop-description">
+    <form method="dialog">
+      <p class="eyebrow">停止本机服务</p>
+      <h2 id="stop-title">要停止 Remote Device 吗？</h2>
+      <p id="stop-description">停止本机容器后，远程工具会断开；本地设备状态、工具家目录和云端授权会保留。再次启动时会尝试恢复连接。</p>
+      <div class="dialog-actions"><button class="button button-secondary" value="cancel">继续运行</button><button class="button button-stop" id="confirm-stop" value="confirm">停止设备</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog workspace-dialog" id="workspace-confirm-dialog" aria-labelledby="workspace-confirm-title" aria-describedby="workspace-confirm-description">
+    <form method="dialog">
+      <p class="eyebrow">工作区挂载</p>
+      <h2 id="workspace-confirm-title">确认修改挂载？</h2>
+      <p id="workspace-confirm-description"></p>
+      <div class="workspace-confirm-details"><strong id="workspace-confirm-path"></strong><span id="workspace-confirm-mode"></span></div>
+      <div class="mount-path-preview" id="workspace-confirm-path-preview" hidden><span><span>本机</span><code id="workspace-confirm-local-path"></code></span><span><span>容器</span><code id="workspace-confirm-container-path"></code></span></div>
+      <ul class="mount-review-list" id="mount-review-list" hidden></ul>
+      <p class="field-help">Remote Device 工具将能访问所选文件夹及其子内容。只读模式会由 Docker 挂载强制限制。</p>
+      <div class="dialog-actions"><button class="button button-secondary" value="cancel">返回修改</button><button class="button button-primary" id="workspace-confirm-apply" value="confirm">确认应用</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="confirm-dialog network-dialog" id="network-dialog" aria-labelledby="network-title" aria-describedby="network-description">
+    <form id="network-form">
+      <div class="network-dialog-scroll">
+        <p class="eyebrow">可选设置</p>
+        <h2 id="network-title">网络设置</h2>
+        <p id="network-description">默认直连。只有当前网络需要代理时才需要设置；系统代理只读取，不会修改。</p>
+        <div class="network-state-card" aria-live="polite">
+          <p><span>当前已保存</span><strong id="proxy-saved-mode">正在读取…</strong></p>
+          <p><span>正在编辑</span><strong id="proxy-draft-mode">正在读取…</strong></p>
+          <p><span>当前运行设备</span><strong id="proxy-runtime-mode">正在读取本机状态…</strong></p>
+        </div>
+        <fieldset class="network-mode-fieldset" aria-labelledby="proxy-mode-label">
+          <legend class="field-label" id="proxy-mode-label">网络模式</legend>
+          <div class="network-mode-options">
+            <label class="network-mode-option"><input type="radio" name="mode" value="direct"><span><strong>直连</strong><small>容器直接访问网络</small></span></label>
+            <label class="network-mode-option"><input type="radio" name="mode" value="system"><span><strong>跟随系统 HTTP(S) 代理</strong><small>读取当前系统代理设置</small></span></label>
+            <label class="network-mode-option"><input type="radio" name="mode" value="manual"><span><strong>手动 HTTP(S) 代理</strong><small>填写容器可访问的代理地址</small></span></label>
+            <label class="network-mode-option"><input type="radio" name="mode" value="project"><span><strong>使用项目配置</strong><small>采用 .env 设置；未配置时直连</small></span></label>
+          </div>
+        </fieldset>
+        <div id="manual-proxy-fields" hidden>
+          <label class="field-label" for="proxy-url">HTTP(S) 代理地址</label>
+          <input class="proxy-input" id="proxy-url" name="proxy-url" type="password" autocomplete="off" spellcheck="false" placeholder="http://proxy.example:8080">
+          <p class="field-help">现有手动代理地址不会回传到页面。要替换地址，请重新填写完整 URL。</p>
+        </div>
+        <p class="field-help">设置保存在本次本机控制台进程的内存中，不写入项目文件。保存后供下次构建或启动使用；正在运行的容器不会因此改变。运行时代理地址会传给 Docker；有 Docker 权限的本机用户可在容器配置中查看地址（包括用户名和密码）。</p>
+        <details class="network-details"><summary>代理无法连接？</summary><p class="field-help">Docker 还需要能下载固定基础镜像；失败时请检查 Docker Desktop 或 Docker Engine 的镜像下载代理。若网络只提供 PAC 或 SOCKS，请填写可用的 HTTP(S) 代理地址。</p></details>
+      </div>
+      <p class="proxy-mode" id="proxy-save-status" role="status" aria-live="polite">没有未保存的修改。</p>
+      <div class="dialog-actions network-actions">
+        <button class="button button-secondary" id="network-close" type="button">关闭</button>
+        <button class="button button-primary" id="proxy-save" type="submit" disabled>保存设置</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="session-lock" id="session-lock" hidden>
+    <div><p class="eyebrow">本机控制台</p><h1>会话链接已失效</h1><p>请使用运行控制台时终端显示的本机链接重新打开。若控制台进程已关闭，再运行 <code>npm run remote-device:dashboard</code>。</p></div>
+  </div>
+</body>
+</html>

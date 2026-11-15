@@ -1,0 +1,27 @@
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials/
+
+# Private handoff, acceptance evidence, and release working materials
+/HANDOFF*.md
+/launch-kit/
+
+# Node
+node_modules/
+/dist/
+/.runtime/
+/third-party/installed/
+npm-debug.log*
+
+# Local test data and runtime output
+.test-data/
+logs/
+*.log
+.DS_Store
+sandbox-workspace/
+sandbox-fixtures/

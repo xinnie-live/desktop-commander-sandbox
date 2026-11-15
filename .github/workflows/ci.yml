@@ -1,0 +1,83 @@
+name: Cross-platform checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  host-platform:
+    name: Host CLI (${{ matrix.os }}, Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['22.21.0', '24']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      - name: Use the pinned dependency and notices toolchain
+        run: npm install --global npm@10.9.4 --ignore-scripts --no-audit --no-fund
+      - name: Install pinned dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Collect third-party notices from the installed lockfile layout
+        run: npm run remote-device:notices
+      - name: Syntax-check entry points
+        shell: bash
+        run: for f in scripts/*.mjs web/*.js web/*.mjs; do node --check "$f"; done
+      - name: Offline regression tests
+        run: npm test
+      - name: Build the source archive and print CLI help
+        run: |
+          npm run remote-device:package
+          node scripts/console.mjs --help
+
+  compose-policy:
+    name: Compose policy and negative cases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.21.0
+          package-manager-cache: false
+      - name: Validate the Compose policy
+        run: |
+          docker compose version
+          docker compose config --quiet
+          node scripts/validate-compose.mjs --self-test
+
+  linux-docker-runtime:
+    name: Linux Docker runtime smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.21.0
+          package-manager-cache: false
+      - name: Build the fixed Linux container image
+        run: docker build --tag "ghcr.io/xinnie-live/desktop-commander-sandbox:$(node -p 'require("./package.json").version')" .
+      - name: Run offline synthetic runtime checks
+        run: |
+          sh scripts/smoke-helper.sh
+          sh scripts/smoke-integration.sh
+          sh scripts/smoke-dependencies.sh
+          sh scripts/smoke-compose-runtime.sh
+          node scripts/verify-host-runtime.mjs
+          sh scripts/smoke-proxy-runtime.sh
+      - name: Remove the temporary test image
+        if: always()
+        run: docker image rm "ghcr.io/xinnie-live/desktop-commander-sandbox:$(node -p 'require("./package.json").version')"

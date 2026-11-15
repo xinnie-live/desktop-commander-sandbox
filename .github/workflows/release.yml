@@ -1,0 +1,156 @@
+name: Release
+
+# Push the chosen release tag (it must match package.json) to:
+#   1. build the image natively on amd64 and arm64 runners (no QEMU, no third-party actions)
+#   2. publish ghcr.io/<owner>/desktop-commander-sandbox:<version> as a multi-arch manifest
+#   3. create a draft GitHub Release; publish it after anonymous image/download checks
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate release before publishing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 22.21.0
+          package-manager-cache: false
+      - name: Install and validate third-party notices with the pinned toolchain
+        run: |
+          npm install --global npm@10.9.4 --ignore-scripts --no-audit --no-fund
+          npm ci --omit=dev --ignore-scripts --no-audit --no-fund
+          npm run remote-device:notices
+      - name: Check release version and changelog
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          test "v${version}" = "${GITHUB_REF_NAME}"
+          grep -Fq "## [${version}]" CHANGELOG.md
+      - name: Test and validate the archive
+        run: |
+          npm audit --omit=dev --ignore-scripts --registry=https://registry.npmjs.org
+          npm test
+          node scripts/validate-compose.mjs --self-test
+          npm run remote-device:package
+          (cd dist && sha256sum --check desktop-commander-sandbox-*.zip.sha256)
+          unzip -q "dist/desktop-commander-sandbox-$(node -p 'require("./package.json").version').zip" -d /tmp/release-check
+          cd /tmp/release-check/desktop-commander-sandbox-*
+          npm test
+
+  image:
+    needs: validate
+    name: Build image (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check that the tag matches package.json
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          test "v${version}" = "${GITHUB_REF_NAME}" || { echo "Tag ${GITHUB_REF_NAME} does not match package.json ${version}"; exit 1; }
+      - name: Build, smoke-test, and push the architecture image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/desktop-commander-sandbox"
+          docker build --tag "ghcr.io/xinnie-live/desktop-commander-sandbox:${version}" \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.version=${version}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" .
+          sh scripts/smoke-integration.sh
+          sh scripts/smoke-dependencies.sh
+          sh scripts/smoke-compose-runtime.sh
+          echo "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          docker tag "ghcr.io/xinnie-live/desktop-commander-sandbox:${version}" "${repo}:${version}-${{ matrix.arch }}"
+          docker push "${repo}:${version}-${{ matrix.arch }}"
+
+  manifest:
+    name: Publish multi-arch manifest
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Combine architecture images
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/desktop-commander-sandbox"
+          echo "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          docker buildx imagetools create --tag "${repo}:${version}" --tag "${repo}:latest" \
+            "${repo}:${version}-amd64" "${repo}:${version}-arm64"
+          docker buildx imagetools inspect "${repo}:${version}"
+
+  github-release:
+    name: Draft GitHub Release
+    needs: manifest
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.21.0
+          package-manager-cache: false
+      - name: Test and build the source archive
+        run: |
+          npm test
+          npm run remote-device:package
+          npm run remote-device:third-party
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(node -p 'require("./package.json").version')"
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/desktop-commander-sandbox"
+          notes="$(mktemp)"
+          # Use the matching CHANGELOG section as release notes.
+          awk -v v="$version" '$0 ~ "^## \\["v"\\]" {p=1; next} p && /^## \[/ {exit} p' CHANGELOG.md > "$notes"
+          cat >> "$notes" <<EOF
+
+          ### Prebuilt image
+
+          \`\`\`sh
+          docker pull ${repo}:${version}
+          \`\`\`
+
+          Then run \`npm run remote-device:start\` without building locally.
+
+          ### Third-party notices and native library source
+
+          The source ZIP contains THIRD-PARTY-NOTICES.md and a pinned source manifest.
+          The separate third-party-sources archive contains the native library sources,
+          upstream patches and build recipe, with a SHA-256 checksum alongside it.
+          EOF
+          gh release create "${GITHUB_REF_NAME}" "dist/desktop-commander-sandbox-${version}.zip" "dist/desktop-commander-sandbox-${version}.zip.sha256" \
+            "dist/desktop-commander-sandbox-third-party-sources-${version}.tar.gz" "dist/desktop-commander-sandbox-third-party-sources-${version}.tar.gz.sha256" \
+            --repo "${GITHUB_REPOSITORY}" --title "${GITHUB_REF_NAME}" --notes-file "$notes" --draft --verify-tag

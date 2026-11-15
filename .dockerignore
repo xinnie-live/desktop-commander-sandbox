@@ -1,0 +1,17 @@
+# Send only files used by the two fixed Docker builds.
+# Local workspaces, credentials, docs and arbitrary host files stay out.
+**
+!package.json
+!package-lock.json
+!scripts/
+scripts/*
+!scripts/patch-upstream.mjs
+!scripts/third-party-notices.mjs
+!LICENSE
+!THIRD-PARTY-NOTICES.md
+!third-party/
+!third-party/**
+third-party/installed/
+!docker/
+docker/*
+!docker/drop_uid_exec.c
