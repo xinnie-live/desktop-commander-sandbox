@@ -157,9 +157,10 @@ testWithFakeDocker('shows and persists full container output including authoriza
       request(server.port, '/api/output', { headers: authHeaders(origin) }),
       request(server.port, '/api/logs', { headers: authHeaders(origin) }),
     ]);
-  } while (Date.now() < deadline && (!JSON.parse(output.body).job?.authorizationUrl || !JSON.parse(logs.body).runs?.length));
+  } while (Date.now() < deadline && (JSON.parse(output.body).job?.phase !== 'finished' || !JSON.parse(logs.body).runs?.length));
 
   const currentOutput = JSON.parse(output.body);
+  assert.equal(currentOutput.job.phase, 'finished');
   assert.equal(currentOutput.job.authorizationUrl, TEST_AUTH_URL);
   assert.ok(output.body.includes(WORKSPACE_DIR));
   assert.ok(currentOutput.lines.some((line) => line.text === `Cannot access ${WORKSPACE_DIR}/private.txt`));

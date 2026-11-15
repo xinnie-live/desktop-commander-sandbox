@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import {
   applicationLogDirectory,
+  replaceConfigFile,
   mountProfilesPath,
   readMountProfiles,
   readWorkspaceProfiles,
@@ -122,5 +123,25 @@ test('does not follow a symlink in either settings file', async () => {
     await assert.rejects(readWorkspaceProfiles(workspaceProfilesLink), /普通文件/);
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('Windows config replacement survives transient sharing errors and preserves atomic failure', async () => {
+  let attempts = 0;
+  const calls = [];
+  const busy = Object.assign(new Error('sharing violation'), { code: 'EPERM' });
+  await replaceConfigFile('temporary', 'config', {
+    platform: 'win32', pause: async () => {},
+    renameFile: async (...args) => { calls.push(args); if (++attempts < 3) throw busy; },
+  });
+  assert.equal(attempts, 3);
+  assert.deepEqual(calls, Array.from({ length: 3 }, () => ['temporary', 'config']));
+  for (const [platform, code, expectedAttempts] of [['win32', 'EPERM', 6], ['linux', 'EPERM', 1], ['win32', 'ENOENT', 1]]) {
+    attempts = 0;
+    const failure = Object.assign(new Error('rename failed'), { code });
+    await assert.rejects(replaceConfigFile('temporary', 'config', {
+      platform, pause: async () => {}, renameFile: async () => { attempts += 1; throw failure; },
+    }), (error) => error === failure);
+    assert.equal(attempts, expectedAttempts);
   }
 });

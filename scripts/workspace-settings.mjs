@@ -3,6 +3,21 @@ import { chmod, lstat, mkdir, readFile, rename, rm, rmdir, utimes, writeFile } f
 import { basename, dirname, isAbsolute, join, posix, resolve, win32 } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
+// Windows can briefly deny replacement while another controller reads the file.
+// Retry only the atomic rename; never unlink the destination or relax permissions.
+export async function replaceConfigFile(source, destination, {
+  platform = process.platform, renameFile = rename,
+  pause = (ms) => new Promise((resolvePause) => setTimeout(resolvePause, ms)),
+} = {}) {
+  for (let attempt = 0; ; attempt += 1) {
+    try { return await renameFile(source, destination); }
+    catch (error) {
+      if (platform !== 'win32' || !['EPERM', 'EACCES', 'EBUSY'].includes(error.code) || attempt >= 5) throw error;
+      await pause(20 * (attempt + 1));
+    }
+  }
+}
+
 // Resolve existing ancestors even when the final config/log directory is not created yet.
 // A dangling symlink or inaccessible ancestor must fail closed.
 export function canonicalControlPath(path) {
@@ -222,7 +237,7 @@ export async function writeWorkspaceProfiles(path, value, { expectedRevision } =
     const temporary = join(directory, `.workspace-profiles-${process.pid}-${randomBytes(8).toString('hex')}.tmp`);
     try {
       await writeFile(temporary, `${JSON.stringify(profiles, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
-      await rename(temporary, path);
+      await replaceConfigFile(temporary, path);
     } finally {
       await rm(temporary, { force: true });
     }
@@ -275,7 +290,7 @@ export async function writeWorkspaceSettings(path, value) {
   const temporary = join(directory, `.workspace-${process.pid}-${randomBytes(8).toString('hex')}.tmp`);
   try {
     await writeFile(temporary, `${JSON.stringify(settings, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
-    await rename(temporary, path);
+    await replaceConfigFile(temporary, path);
   } finally {
     await rm(temporary, { force: true });
   }
@@ -336,7 +351,7 @@ export async function writeMountProfiles(path, value) {
   const temporary = join(directory, `.mount-profiles-${process.pid}-${randomBytes(8).toString('hex')}.tmp`);
   try {
     await writeFile(temporary, `${JSON.stringify(profiles, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
-    await rename(temporary, path);
+    await replaceConfigFile(temporary, path);
   } finally {
     await rm(temporary, { force: true });
   }
