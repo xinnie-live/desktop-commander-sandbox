@@ -129,10 +129,10 @@
       "bytes": 6617696
     },
     {
-      "file": "fontconfig-fontconfig-2.18.3.tar.gz",
-      "url": "https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.18.3/fontconfig-2.18.3.tar.gz",
-      "sha256": "9ae01e1d53acdef56010c5451cd34aa41d325b2faccd8606448d8fa01b2496b3",
-      "bytes": 666753
+      "file": "fontconfig-2.18.3.tar.xz",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz",
+      "sha256": "4f7b554a38cdf78c033f666c8871f3749e14a094f65a07f630c91ed0b43d35e3",
+      "bytes": 1172016
     },
     {
       "file": "harfbuzz-14.5.0.tar.gz",

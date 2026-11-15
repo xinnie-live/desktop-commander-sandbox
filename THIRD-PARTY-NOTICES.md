@@ -57,6 +57,12 @@ metadata, archived tools and maintainer/test files. This is a source-download
 substitution for the same version, not a change to the installed native library.
 The original upstream build recipe is preserved unchanged.
 
+For fontconfig 2.18.3, the manifest likewise uses the upstream release tarball
+from its versioned GitLab package endpoint instead of the generated tag archive
+(which returned HTTP 406 on GitHub runners). All 712 files in the original
+archive are present and byte-identical; the release adds generated distribution
+files. The installed library version and original upstream recipe are unchanged.
+
 Each Release also supplies
 `desktop-commander-sandbox-third-party-sources-<version>.tar.gz` and its SHA-256
 file. This archive contains the original native source archives and patches
