@@ -1,5 +1,5 @@
 # Pinned multi-platform manifest index; supports linux/amd64 and linux/arm64.
-FROM gcc:12-bookworm@sha256:5b83b2851a74d87a3ebf35dc04f16ea1540aff7538b0688b0c9fcd7a407c24a4 AS helper-build
+FROM gcc:15-bookworm@sha256:9ca91b05c7b07d2979f16413e8b2cd6ec8a7c80ffca4121ccab0aeba33f90460 AS helper-build
 WORKDIR /build
 COPY docker/drop_uid_exec.c ./drop_uid_exec.c
 RUN gcc -DDEVICE_UID=10001 -DDEVICE_GID=10001 -DTOOL_UID=10002 -DTOOL_GID=10002 \
