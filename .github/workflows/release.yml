@@ -4,7 +4,9 @@ name: Release
 #   1. build the image natively on amd64 and arm64 runners (no QEMU, no third-party actions)
 #   2. publish ghcr.io/<owner>/desktop-commander-sandbox:<version> as a multi-arch manifest
 #   3. create a draft GitHub Release; publish it after anonymous image/download checks
+# Manual runs exercise preparation only: no registry login, image push, manifest or Release.
 on:
+  workflow_dispatch:
   push:
     tags: ['v*.*.*']
 
@@ -28,12 +30,13 @@ jobs:
           npm install --global npm@10.9.4 --ignore-scripts --no-audit --no-fund
           npm ci --omit=dev --ignore-scripts --no-audit --no-fund
           npm run remote-device:notices
-      - name: Check release version and changelog
+      - name: Check package, lockfile, Compose, changelog and tag consistency
         run: |
-          version="$(node -p 'require("./package.json").version')"
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
-          test "v${version}" = "${GITHUB_REF_NAME}"
-          grep -Fq "## [${version}]" CHANGELOG.md
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            node scripts/validate-release.mjs --rehearsal
+          else
+            node scripts/validate-release.mjs --tag "$GITHUB_REF_NAME"
+          fi
       - name: Test and validate the archive
         run: |
           npm audit --omit=dev --ignore-scripts --registry=https://registry.npmjs.org
@@ -42,8 +45,23 @@ jobs:
           npm run remote-device:package
           (cd dist && sha256sum --check desktop-commander-sandbox-*.zip.sha256)
           unzip -q "dist/desktop-commander-sandbox-$(node -p 'require("./package.json").version').zip" -d /tmp/release-check
-          cd /tmp/release-check/desktop-commander-sandbox-*
-          npm test
+          (cd /tmp/release-check/desktop-commander-sandbox-* && npm test)
+      - name: Verify native source attachment before any image publication
+        run: |
+          npm run remote-device:third-party
+          (cd dist && sha256sum --check desktop-commander-sandbox-third-party-sources-*.tar.gz.sha256)
+      - name: Preserve the verified release attachments
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-materials-${{ github.sha }}
+          path: |
+            dist/desktop-commander-sandbox-*.zip
+            dist/desktop-commander-sandbox-*.zip.sha256
+            dist/desktop-commander-sandbox-third-party-sources-*.tar.gz
+            dist/desktop-commander-sandbox-third-party-sources-*.tar.gz.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
 
   image:
     needs: validate
@@ -64,28 +82,36 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Check that the tag matches package.json
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 22.21.0
+          package-manager-cache: false
+      - name: Build and smoke-test the architecture image
         run: |
           version="$(node -p 'require("./package.json").version')"
-          test "v${version}" = "${GITHUB_REF_NAME}" || { echo "Tag ${GITHUB_REF_NAME} does not match package.json ${version}"; exit 1; }
-      - name: Build, smoke-test, and push the architecture image
+          docker build --tag "ghcr.io/xinnie-live/desktop-commander-sandbox:${version}" \
+            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.version=${version}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" .
+          sh scripts/smoke-helper.sh
+          sh scripts/smoke-integration.sh
+          sh scripts/smoke-dependencies.sh
+          sh scripts/smoke-compose-runtime.sh
+          node scripts/verify-host-runtime.mjs
+          sh scripts/smoke-proxy-runtime.sh
+      - name: Push architecture image only for a release tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="$(node -p 'require("./package.json").version')"
           repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/desktop-commander-sandbox"
-          docker build --tag "ghcr.io/xinnie-live/desktop-commander-sandbox:${version}" \
-            --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
-            --label "org.opencontainers.image.version=${version}" \
-            --label "org.opencontainers.image.revision=${GITHUB_SHA}" .
-          sh scripts/smoke-integration.sh
-          sh scripts/smoke-dependencies.sh
-          sh scripts/smoke-compose-runtime.sh
           echo "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
           docker tag "ghcr.io/xinnie-live/desktop-commander-sandbox:${version}" "${repo}:${version}-${{ matrix.arch }}"
           docker push "${repo}:${version}-${{ matrix.arch }}"
 
   manifest:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     name: Publish multi-arch manifest
     needs: image
     runs-on: ubuntu-24.04
@@ -108,6 +134,7 @@ jobs:
           docker buildx imagetools inspect "${repo}:${version}"
 
   github-release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     name: Draft GitHub Release
     needs: manifest
     runs-on: ubuntu-24.04
@@ -121,11 +148,13 @@ jobs:
         with:
           node-version: 22.21.0
           package-manager-cache: false
-      - name: Test and build the source archive
-        run: |
-          npm test
-          npm run remote-device:package
-          npm run remote-device:third-party
+      - name: Download the already validated attachments
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-materials-${{ github.sha }}
+          path: dist
+      - name: Verify attachment checksums again
+        run: (cd dist && sha256sum --check ./*.sha256)
       - name: Create the draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

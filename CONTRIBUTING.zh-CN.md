@@ -69,6 +69,12 @@ Dependabot 每周检查依赖更新。补丁脚本从锁文件读取目标版本
 运行 `npm run remote-device:third-party` 生成独立原生库源码附件；发布工作流会把它
 及校验和附到草稿 Release。镜像分发期间应保留该附件和文档所列源码入口。
 
+### 不发布的预演
+
+本机运行 `node scripts/validate-release.mjs --rehearsal`。在 Actions 中对计划发布的源码提交手动运行 **Release** 工作流，或使用 `gh workflow run release.yml --ref <分支>`。手动运行会校验版本一致性、审计依赖、测试源码 ZIP、校验原生库源码附件，并在两种原生架构上构建及执行冒烟测试；跳过仓库登录/镜像上传、manifest 和 GitHub Release 创建。开发版本可预演，但预演不代表授权发布或正式版本已验收。
+
+推发布标签前，同步 package.json、锁文件两处根版本与 Compose 镜像，补对应 CHANGELOG 小节，并运行 `node scripts/validate-release.mjs --tag vX.Y.Z`。标签触发仍会先推送版本镜像及 latest，再创建草稿 Release；必须在推标签前完成文档要求的验收和发布核对。
+
 ## 首次公开发布
 
 以 `0.0.0-dev` 公开源码不需要先打发布标签。推送前检查准确的暂存区内容（包括新增声明和素材），排除本机数据与凭据，并与已测试的源码包核对。首次源码提交推送后，必须确认同一个提交上的跨平台 Actions 矩阵通过；本机测试不能代替 Windows CI 结果。未完成相应验收前，保留开发版及平台未验证标记。

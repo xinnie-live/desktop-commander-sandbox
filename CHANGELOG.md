@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A manual release rehearsal that validates source attachments and both native image architectures without publishing images or a Release. Release metadata checks reject package, lockfile, Compose, changelog and tag drift.
+
 - Cross-platform launch scripts check prerequisites and open the local console.
 - A fixed-version GHCR image download action in the console and CLI, with a separate source-build option and existing job logs.
 

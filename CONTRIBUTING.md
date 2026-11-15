@@ -74,6 +74,12 @@ Run `npm run remote-device:third-party` to produce the separate native-source
 attachment. The release workflow attaches it and its checksum to the draft Release.
 Keep this attachment and its documented source URLs accessible with the images.
 
+### Rehearse without publishing
+
+Run `node scripts/validate-release.mjs --rehearsal` locally. From Actions, manually run the **Release** workflow on the intended source commit, or use `gh workflow run release.yml --ref <branch>`. Manual runs validate version consistency, audit dependencies, test the source ZIP, verify the native-source attachment, and build/smoke-test both native architectures. Registry login/push, manifest creation and GitHub Release creation are skipped. A development version can be rehearsed; this does not authorize or establish a stable release.
+
+Before a release tag, synchronize both lockfile root versions and the Compose image with package.json, add its CHANGELOG section, and run `node scripts/validate-release.mjs --tag vX.Y.Z`. Tag-triggered runs still publish versioned and latest images before creating the draft Release. Complete the documented acceptance and publication review before pushing the tag.
+
 ## First public release
 
 Publishing source at `0.0.0-dev` does not require a release tag. Before pushing, review the exact staged tree (including newly added notices/assets), exclude local data and credentials, and compare it with the tested archive. After the first source commit is pushed, require the cross-platform Actions matrix on that exact commit to pass; local tests cannot establish a Windows CI result. Keep development and unverified-platform labels until their acceptance is complete.

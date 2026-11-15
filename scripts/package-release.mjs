@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const CONTENTS = [
+  'scripts/validate-release.mjs',
+  'tests/release-metadata.test.mjs',
   'THIRD-PARTY-NOTICES.md',
   'scripts/third-party-notices.mjs',
   'scripts/package-third-party.mjs',

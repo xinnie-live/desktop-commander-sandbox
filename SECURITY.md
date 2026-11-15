@@ -4,7 +4,7 @@
 
 Please **do not** open a public issue for security problems.
 
-Once private vulnerability reporting is enabled, report through GitHub: **Security → Report a vulnerability** on this repository ([direct link](https://github.com/xinnie-live/desktop-commander-sandbox/security/advisories/new)).
+Private vulnerability reporting is enabled. Report through GitHub: **Security → Report a vulnerability** on this repository ([direct link](https://github.com/xinnie-live/desktop-commander-sandbox/security/advisories/new)).
 
 Please include:
 
