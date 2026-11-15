@@ -6,7 +6,7 @@ RUN gcc -DDEVICE_UID=10001 -DDEVICE_GID=10001 -DTOOL_UID=10002 -DTOOL_GID=10002 
     -O2 -Wall -Wextra -Werror -o /drop-uid-exec ./drop_uid_exec.c
 
 # Pinned multi-platform manifest index; supports linux/amd64 and linux/arm64.
-FROM node:22.21.0-bookworm-slim@sha256:f9f7f95dcf1f007b007c4dcd44ea8f7773f931b71dc79d57c216e731c87a090b
+FROM node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1
 
 ENV HOME=/var/lib/remote-device \
     DESKTOP_COMMANDER_DISABLE_TELEMETRY=1 \
