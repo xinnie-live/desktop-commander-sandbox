@@ -54,7 +54,23 @@ async function startConsole({ pickerFolderNames = [] } = {}) {
     const pickerBin = join(testConfigHome, 'fake-picker-bin');
     await mkdir(pickerBin);
     syntheticPickerPaths = pickerFolderNames.map((name) => join(testConfigHome, name));
-    for (const directory of syntheticPickerPaths) await mkdir(directory, { recursive: true, mode: 0o770 });
+    for (const directory of syntheticPickerPaths) {
+      await mkdir(directory, { recursive: true, mode: 0o770 });
+      // mkdir's mode is filtered by the runner umask. Prepare permissions on
+      // these synthetic fixtures explicitly; production must never repair them.
+      await chmod(directory, 0o770);
+    }
+    // Exercise the stopped-device editing path even when Docker is absent.
+    // Reject every mutation instead of reaching a real host daemon.
+    const fakeDocker = join(pickerBin, 'docker');
+    await writeFile(fakeDocker, `#!/bin/sh
+case "$*" in
+  *"ps --all --format json"*) printf '[]\\n' ;;
+  "image inspect "*) exit 1 ;;
+  *) exit 87 ;;
+esac
+`, { mode: 0o700 });
+    await chmod(fakeDocker, 0o700);
     const selectionList = join(testConfigHome, 'synthetic-picker-selections.txt');
     const selectionIndex = join(testConfigHome, 'synthetic-picker-index.txt');
     await writeFile(selectionList, `${syntheticPickerPaths.join('\n')}\n`);
@@ -379,7 +395,9 @@ test('local console enforces its browser/API boundary without starting Docker ac
     const projectLocalWorkspace = resolve(TEST_WORKSPACE_ROOT, selectedWorkspace);
     await assert.rejects(lstat(projectLocalWorkspace), { code: 'ENOENT' }, 'selected folders must not create a project-local workspace directory');
   }
-  if (statusResponse.status === 200 && JSON.parse(statusResponse.body).status.state === 'stopped') {
+  if (process.platform !== 'win32') {
+    assert.equal(statusResponse.status, 200, statusResponse.body);
+    assert.equal(JSON.parse(statusResponse.body).status.state, 'stopped');
     const createWorkspace = await sendRequest(address, '/api/workspace-create', {
       method: 'POST',
       headers: { ...sessionHeaders(origin), 'content-type': 'application/json' },
