@@ -41,7 +41,7 @@ In pull requests, describe why the change is needed, what it affects, which chec
 
 ## Upstream upgrades
 
-Dependabot checks dependencies weekly. The patch script reads the target version from the lockfile, checks the installed version, and attempts the existing patches. A failed match stops the build. Existing CI builds update PRs and runs offline checks. Investigate upstream changes when patches or tests fail, then validate the fix. Before release, use dedicated trial folders to verify volume retention, actual reconnection, and read/write permissions across an image upgrade. Record versions, environment, and results. The user manually approves real pairing.
+Dependabot opens security-update PRs only; routine version-update PRs are disabled. Review compatibility and CI before merging security updates. The patch script reads the target version from the lockfile, checks the installed version, and attempts the existing patches. A failed match stops the build. Existing CI builds update PRs and runs offline checks. Investigate upstream changes when patches or tests fail, then validate the fix. Before release, use dedicated trial folders to verify volume retention, actual reconnection, and read/write permissions across an image upgrade. Record versions, environment, and results. The user manually approves real pairing.
 
 ## Release checks
 

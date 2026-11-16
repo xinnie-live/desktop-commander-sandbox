@@ -8,13 +8,16 @@
 
 ## 环境要求
 
-需要 **Node.js 22 或更高版本**，以及能运行 Linux 容器的 Docker：Docker Desktop、OrbStack，或 Docker Engine 加 **Compose 插件 2.24.1+**。
+需要 **Node.js 22.12.0 或更高版本**，以及能运行 Linux 容器的 Docker：Docker Desktop、OrbStack，或 Docker Engine 加 **Compose 插件 2.24.1+**。
+
+宿主机需要 Node.js 来运行本地 CLI 和 Web 控制台。CI 覆盖 Node.js 22.21.0 和 24；容器独立使用固定的 Node.js 22.21.0 镜像，不需要手动在容器内安装 Node.js。
+
 
 | 系统 | 准备 | 官方说明 |
 |---|---|---|
-| macOS | Node.js 22+，加 Docker Desktop 或 OrbStack | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/) |
-| Windows | Node.js 22+，加使用 WSL 2 / Linux containers 后端的 Docker Desktop | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) · [WSL](https://docs.docker.com/desktop/features/wsl/) |
-| Linux | Node.js 22+、Docker Engine 和 Compose 插件；以有 Docker 权限的普通用户运行 | [Node.js](https://nodejs.org/en/download) · [Docker Engine](https://docs.docker.com/engine/install/) · [Compose 插件](https://docs.docker.com/compose/install/linux/) |
+| macOS | Node.js 22.12.0+，加 Docker Desktop 或 OrbStack | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/) |
+| Windows | Node.js 22.12.0+，加使用 WSL 2 / Linux containers 后端的 Docker Desktop | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) · [WSL](https://docs.docker.com/desktop/features/wsl/) |
+| Linux | Node.js 22.12.0+、Docker Engine 和 Compose 插件；以有 Docker 权限的普通用户运行 | [Node.js](https://nodejs.org/en/download) · [Docker Engine](https://docs.docker.com/engine/install/) · [Compose 插件](https://docs.docker.com/compose/install/linux/) |
 
 控制台没有 npm 依赖，不需要 `npm install`。Desktop Commander 及其锁定依赖会在首次构建镜像时装进 Docker 镜像。本项目不会替你安装软件、修改用户组或系统设置。Linux 上把用户加入 `docker` 组等同于给了 root 级的 Docker 控制权，只对可信用户这样做。
 
@@ -36,7 +39,7 @@ node scripts/console.mjs workspace list
 
 **你仍然在 Windows 上使用本项目，不需要自己安装一套 Linux、Ubuntu 或 Linux 桌面，也不需要进入 Linux 终端。** 本机启动器和浏览器控制台运行在 Windows；Docker Desktop 在后台提供沙箱需要的 Linux 容器环境。
 
-1. 从 [Node.js 官网](https://nodejs.org/en/download)安装 Node.js 22 或更高版本。
+1. 从 [Node.js 官网](https://nodejs.org/en/download)安装 Node.js 22.12.0 或更高版本。
 2. 打开 [Docker Desktop for Windows 官方安装页](https://docs.docker.com/desktop/setup/install/windows-install/)，先核对系统要求，再选择匹配电脑处理器的安装包。普通 Intel / AMD 电脑选择 x86_64；Windows ARM 电脑按官方说明选择 Arm 版本。
 3. 按安装向导选择 **WSL 2**，使用 **Linux 容器**。如提示缺少或需要更新 WSL 2，按[官方 WSL 指引](https://docs.docker.com/desktop/features/wsl/)完成；如提示重启，先重启电脑。WSL 2 是后台运行支持，不要求另外安装 Ubuntu。Docker 也有其他后端，本指南只介绍 WSL 2 路线。
 4. 从开始菜单打开 **Docker Desktop**，由你确认首次使用条款，等待引擎启动完成。
@@ -208,7 +211,7 @@ npm run remote-device:logs -- show 0123456789abcdef   # 原样输出，未脱敏
 
 | 情况 | 处理 |
 |---|---|
-| macOS 提示缺少 Node.js | 在启动器输入 `y` 打开官方下载页，安装 Node.js 22+ 的 macOS 安装包，关闭旧终端窗口后重新双击 `start.command`。 |
+| macOS 提示缺少 Node.js | 在启动器输入 `y` 打开官方下载页，安装 Node.js 22.12.0+ 的 macOS 安装包，关闭旧终端窗口后重新双击 `start.command`。 |
 | 启动器找不到 Docker | 按启动器显示的当前系统官方链接安装 Docker。Windows 选择 Docker Desktop + WSL 2 / Linux 容器；安装后启动 Docker Desktop，关闭旧窗口并重新双击启动器。已经安装时，在新终端检查 `docker --version` 和 PATH。后续检查会跳过，不表示项目配置损坏。 |
 | Docker daemon 不可用 | 启动 Docker Desktop、OrbStack 或 Docker Engine，确认 `docker info` 能运行后重试。 |
 | 镜像未构建 | 点“准备镜像”，选择下载或源码构建；开发版只能从源码构建。 |

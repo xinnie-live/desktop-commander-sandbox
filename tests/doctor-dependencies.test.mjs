@@ -1,3 +1,4 @@
+import { isSupportedNode } from '../scripts/node-version.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
@@ -10,6 +11,7 @@ const doctor = source.slice(source.indexOf('function printDoctorCheck('), source
 async function run(platform, failure) {
   const calls = [], lines = [];
   const context = vm.createContext({
+    isSupportedNode,
     console: { log: line => lines.push(line) },
     process: { platform, arch: 'x64', versions: { node: '22.21.0' }, getuid: () => 1000 },
     MINIMUM_COMPOSE_VERSION: '2.24.1', PROJECT: 'trial', WORKSPACE: 'default',

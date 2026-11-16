@@ -10,7 +10,7 @@ const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FILES = [
   'scripts/third-party-notices.mjs', 'scripts/package-third-party.mjs',
   'package.json', 'compose.yaml',
-  'scripts/console.mjs', 'scripts/console-cli.mjs', 'scripts/console-http.mjs', 'scripts/docker-output.mjs', 'scripts/run-log-files.mjs', 'scripts/compose-version.mjs',
+  'scripts/node-version.mjs', 'scripts/console.mjs', 'scripts/console-cli.mjs', 'scripts/console-http.mjs', 'scripts/docker-output.mjs', 'scripts/run-log-files.mjs', 'scripts/compose-version.mjs',
   'scripts/mount-compose.mjs', 'scripts/public-data.mjs', 'scripts/run-log-security.mjs',
   'scripts/system-proxy.mjs', 'scripts/workspace-selection.mjs', 'scripts/workspace-settings.mjs',
   'web/authorization-url.mjs', 'web/ui-format.mjs',

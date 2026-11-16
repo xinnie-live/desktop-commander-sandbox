@@ -8,13 +8,16 @@ For how to get good results from the AI inside the container (runtime copies, de
 
 ## Prerequisites
 
-You need **Node.js 22 or later** and Docker that runs Linux containers: Docker Desktop, OrbStack, or Docker Engine with the **Compose plugin 2.24.1+**.
+You need **Node.js 22.12.0 or later** and Docker that runs Linux containers: Docker Desktop, OrbStack, or Docker Engine with the **Compose plugin 2.24.1+**.
+
+The host computer needs Node.js for the local CLI and Web console. CI covers Node.js 22.21.0 and 24; the container independently uses the pinned Node.js 22.21.0 image. You do not install Node.js inside the container manually.
+
 
 | Platform | Setup | Official guides |
 |---|---|---|
-| macOS | Node.js 22+, plus Docker Desktop or OrbStack | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/) |
-| Windows | Node.js 22+, plus Docker Desktop with the WSL 2 / Linux containers backend | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) · [WSL](https://docs.docker.com/desktop/features/wsl/) |
-| Linux | Node.js 22+, Docker Engine and the Compose plugin; run as a regular user allowed to use Docker | [Node.js](https://nodejs.org/en/download) · [Docker Engine](https://docs.docker.com/engine/install/) · [Compose plugin](https://docs.docker.com/compose/install/linux/) |
+| macOS | Node.js 22.12.0+, plus Docker Desktop or OrbStack | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Mac](https://docs.docker.com/desktop/setup/install/mac-install/) |
+| Windows | Node.js 22.12.0+, plus Docker Desktop with the WSL 2 / Linux containers backend | [Node.js](https://nodejs.org/en/download) · [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) · [WSL](https://docs.docker.com/desktop/features/wsl/) |
+| Linux | Node.js 22.12.0+, Docker Engine and the Compose plugin; run as a regular user allowed to use Docker | [Node.js](https://nodejs.org/en/download) · [Docker Engine](https://docs.docker.com/engine/install/) · [Compose plugin](https://docs.docker.com/compose/install/linux/) |
 
 The console has no npm dependencies, so `npm install` is not needed. Desktop Commander and its pinned dependencies are installed into the Docker image when you first build it. This project never installs software, changes group membership, or modifies system settings for you. On Linux, adding a user to the `docker` group grants root-equivalent control of the Docker daemon; do it only for trusted users.
 
@@ -36,7 +39,7 @@ Replace the example with a dedicated existing folder that meets the Linux group-
 
 **Keep using Windows: you do not need to install a separate Linux system, Ubuntu, or Linux desktop, or enter a Linux terminal.** The launcher and browser console run on Windows. Docker Desktop supplies the Linux container environment in the background.
 
-1. Install Node.js 22 or later from the [official Node.js website](https://nodejs.org/en/download).
+1. Install Node.js 22.12.0 or later from the [official Node.js website](https://nodejs.org/en/download).
 2. Open the [official Docker Desktop Windows installation guide](https://docs.docker.com/desktop/setup/install/windows-install/), check its system requirements, and choose the installer for your CPU. Intel / AMD PCs use x86_64; Windows ARM PCs should follow the official Arm instructions.
 3. Choose **WSL 2** and **Linux containers**. If prompted, enable or update WSL 2 using the [official WSL guide](https://docs.docker.com/desktop/features/wsl/), and restart Windows if requested. WSL 2 is background infrastructure; a separate Ubuntu installation is not required. Docker has other backends; this guide covers the WSL 2 route.
 4. Open **Docker Desktop** from Start, review and accept its first-use terms yourself, and wait for the engine to start.
@@ -208,7 +211,7 @@ Writes to mounted folders are also limited by host file permissions. These limit
 
 | Situation | What to do |
 |---|---|
-| macOS reports missing Node.js | Enter `y` in the launcher to open the official download page. Install Node.js 22+ using its macOS installer, close the old terminal window, and double-click `start.command` again. |
+| macOS reports missing Node.js | Enter `y` in the launcher to open the official download page. Install Node.js 22.12.0+ using its macOS installer, close the old terminal window, and double-click `start.command` again. |
 | Launcher cannot find Docker | Follow the platform-specific official installation link shown by the launcher. On Windows, use Docker Desktop with WSL 2 / Linux containers. Start Docker Desktop, close the old window, and relaunch. If already installed, check `docker --version` and PATH in a new terminal. Dependent checks are skipped; this does not indicate broken project configuration. |
 | Docker daemon unavailable | Start Docker Desktop, OrbStack or Docker Engine, check that `docker info` works, and try again. |
 | Image not built | Select **Prepare image**, then download or build. Development versions require a source build. |

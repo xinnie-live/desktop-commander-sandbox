@@ -4,7 +4,7 @@ setlocal
 cd /d "%~dp0"
 where node >nul 2>nul
 if errorlevel 1 (
-  echo Node.js 22+ required. Install from https://nodejs.org/en/download
+  echo Node.js 22.12.0+ required. Install from https://nodejs.org/en/download
   pause
   exit /b 1
 )

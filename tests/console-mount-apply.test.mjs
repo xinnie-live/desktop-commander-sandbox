@@ -15,7 +15,7 @@ const FILES = [
   'scripts/third-party-notices.mjs', 'scripts/package-third-party.mjs',
   'package.json',
   'compose.yaml',
-  'scripts/console.mjs',
+  'scripts/node-version.mjs', 'scripts/console.mjs',
   'scripts/console-cli.mjs', 'scripts/console-http.mjs', 'scripts/docker-output.mjs', 'scripts/run-log-files.mjs',
   'scripts/compose-version.mjs',
   'scripts/mount-compose.mjs',
