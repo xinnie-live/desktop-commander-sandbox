@@ -27,6 +27,8 @@ Runtime proxy environment variables are stored in Docker container configuration
 
 The project does not assume that clients or cloud services are absolutely trustworthy. This is not an allegation that a specific service is malicious or compromised.
 
+The console uses a fixed default loopback port (53707). Any browser on the host can open the address and obtain the current per-start token with a same-origin JSON POST to `/api/session`. This endpoint requires the exact Origin and custom request header, rejects cross-origin fetch metadata, and offers no CORS preflight. It performs no device or filesystem operation. The browser keeps the token only in memory; API routes still validate it. This is a browser-origin boundary, not authentication between local OS users: processes or other users that can reach host loopback are trusted by this design.
+
 ## Threat scenarios
 
 | Scenario | Current controls | Residual risk |

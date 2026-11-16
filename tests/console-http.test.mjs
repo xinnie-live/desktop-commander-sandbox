@@ -3,6 +3,8 @@ import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { chmod, lstat, mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { afterEach, test } from 'node:test';
+import { createServer } from 'node:net';
+import { consolePort, DEFAULT_CONSOLE_PORT } from '../scripts/console-http.mjs';
 import { request as httpRequest } from 'node:http';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,7 +22,7 @@ let sessionToken;
 let testConfigHome;
 let syntheticPickerPaths = [];
 
-async function startConsole({ pickerFolderNames = [] } = {}) {
+async function startConsole({ pickerFolderNames = [], listenPort = '0' } = {}) {
   testConfigHome = await mkdtemp(join(tmpdir(), 'rds-console-config-'));
   syntheticSelectedPath = join(testConfigHome, 'private-synthetic-folder');
   const configDirectory = join(testConfigHome, 'desktop-commander-sandbox');
@@ -46,7 +48,7 @@ async function startConsole({ pickerFolderNames = [] } = {}) {
     throw new Error('Test workspace root must be a project-local real directory.');
   }
   await mkdir(resolve(TEST_WORKSPACE_ROOT, TEST_WORKSPACE));
-  const env = { ...process.env };
+  const env = { ...process.env, REMOTE_DEVICE_CONSOLE_PORT: listenPort };
   env.REMOTE_DEVICE_SANDBOX_CONFIG_HOME = testConfigHome;
   env.REMOTE_DEVICE_SANDBOX_LOG_HOME = join(testConfigHome, 'test-logs');
   syntheticPickerPaths = [];
@@ -96,11 +98,13 @@ esac
   child = spawn(process.execPath, [CONSOLE, 'dashboard', '--no-open', '--workspace', TEST_WORKSPACE], {
     cwd: ROOT,
     env,
-    stdio: ['ignore', 'pipe', 'ignore'],
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
 
   return new Promise((resolveStart, rejectStart) => {
     let output = '';
+    let startupError = '';
+    child.stderr.on('data', (chunk) => { startupError = `${startupError}${chunk}`.slice(-2048); });
     let settled = false;
     const timer = setTimeout(() => finish(new Error('Local console did not start within the expected time.')), 10_000);
     const finish = (error, result) => {
@@ -112,7 +116,7 @@ esac
     };
 
     child.once('error', () => finish(new Error('Could not start the local console process.')));
-    child.once('close', () => finish(new Error('Local console exited before it was ready.')));
+    child.once('close', () => finish(new Error(`Local console exited before it was ready: ${startupError}`)));
     child.stdout.on('data', (chunk) => {
       output = `${output}${chunk.toString('utf8')}`.slice(-2048);
       const match = output.match(/http:\/\/127\.0\.0\.1:(\d+)\/#session=([A-Za-z0-9_-]+)/);
@@ -608,7 +612,8 @@ test('local console enforces its browser/API boundary without starting Docker ac
 test('each process start rotates the local session token', async () => {
   const first = await startConsole();
   await stopConsole();
-  const second = await startConsole();
+  const second = await startConsole({ listenPort: String(first.port) });
+  assert.equal(second.port, first.port, 'restart reuses the configured port');
   const oldTokenHeaders = {
     authorization: `Bearer ${first.token}`,
     'x-console-request': 'desktop-commander-sandbox',
@@ -661,4 +666,67 @@ test('dashboard reloads externally changed workspace profiles and rejects a stal
   const mounts = await sendRequest(address, '/api/mounts', { headers: sessionHeaders(origin) });
   assert.equal(mounts.status, 200);
   assert.equal(JSON.parse(mounts.body).applied.length, 1);
+});
+
+
+test('console port defaults to a fixed address and rejects invalid overrides', () => {
+  assert.equal(DEFAULT_CONSOLE_PORT, 53707);
+  assert.equal(consolePort('53707'), 53707);
+  assert.equal(consolePort('0'), 0);
+  for (const value of ['', '-1', '65536', '3.5', ' 53707', 'abc']) assert.throws(() => consolePort(value));
+});
+
+test('fresh browser tabs bootstrap a session while cross-origin requests remain blocked', async () => {
+  const server = await startConsole();
+  const origin = `http://127.0.0.1:${server.port}`;
+  const headers = { origin, 'x-console-request': 'desktop-commander-sandbox',
+    'content-type': 'application/json', 'sec-fetch-site': 'same-origin',
+    'sec-fetch-mode': 'same-origin', 'sec-fetch-dest': 'empty' };
+  // No URL credential, cookie or browser storage is supplied by either tab.
+  for (let tab = 0; tab < 2; tab += 1) {
+    const opened = await sendRequest(server.port, '/api/session', { method: 'POST', headers, body: '{}' });
+    assert.equal(opened.status, 200);
+    assert.equal(opened.headers['cache-control'], 'no-store');
+    assert.equal(opened.headers['access-control-allow-origin'], undefined);
+    const token = JSON.parse(opened.body).token;
+    assert.equal(token, server.token);
+    const profiles = await sendRequest(server.port, '/api/workspaces', {
+      headers: { ...headers, authorization: `Bearer ${token}` },
+    });
+    assert.equal(profiles.status, 200);
+  }
+  const withoutOrigin = { ...headers }; delete withoutOrigin.origin;
+  const withoutMarker = { ...headers }; delete withoutMarker['x-console-request'];
+  for (const rejected of [withoutOrigin, withoutMarker,
+    { ...headers, origin: 'null' }, { ...headers, origin: 'https://attacker.invalid' },
+    { ...headers, origin: 'http://127.0.0.1:9999' },
+    { ...headers, 'sec-fetch-site': 'cross-site' }, { ...headers, 'sec-fetch-site': 'same-site' },
+    { ...headers, 'sec-fetch-mode': 'navigate' }, { ...headers, 'sec-fetch-dest': 'iframe' }]) {
+    const response = await sendRequest(server.port, '/api/session', { method: 'POST', headers: rejected, body: '{}' });
+    assert.equal(response.status, 403);
+    assert.ok(!response.body.includes(server.token));
+  }
+  for (const method of ['GET', 'OPTIONS']) {
+    const response = await sendRequest(server.port, '/api/session', { method, headers });
+    assert.equal(response.status, 403);
+    assert.equal(response.headers['access-control-allow-origin'], undefined);
+  }
+  assert.equal((await sendRequest(server.port, '/api/session', {
+    method: 'POST', headers: { ...headers, host: 'attacker.invalid' }, body: '{}',
+  })).status, 421);
+  assert.equal((await sendRequest(server.port, '/api/session', {
+    method: 'POST', headers: { ...headers, 'content-type': 'text/plain' }, body: '{}',
+  })).status, 400);
+  assert.equal((await sendRequest(server.port, '/api/session?callback=evil', {
+    method: 'POST', headers, body: '{}',
+  })).status, 403);
+  assert.equal((await sendRequest(server.port, '/api/workspaces', { headers })).status, 403);
+});
+
+test('occupied configured port fails instead of silently choosing a random port', async () => {
+  const blocker = createServer();
+  await new Promise((resolveListen) => blocker.listen(0, '127.0.0.1', resolveListen));
+  try {
+    await assert.rejects(startConsole({ listenPort: String(blocker.address().port) }), /Local console port .* is already in use/);
+  } finally { await new Promise((resolveClose) => blocker.close(resolveClose)); }
 });

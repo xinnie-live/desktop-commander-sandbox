@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Desktop Commander Sandbox · Local Control</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%229%22%20fill%3D%22%230876c8%22%2F%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M10%207h5c7%200%2010%203%2010%209s-3%209-10%209h-5zm4%204v10h1c4%200%206-1.5%206-5s-2-5-6-5z%22%2F%3E%3C%2Fsvg%3E">
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.js"></script>
 </head>
@@ -339,7 +340,7 @@
   </dialog>
 
   <div class="session-lock" id="session-lock" hidden>
-    <div><p class="eyebrow">本机控制台</p><h1>会话链接已失效</h1><p>请使用运行控制台时终端显示的本机链接重新打开。若控制台进程已关闭，再运行 <code>npm run remote-device:dashboard</code>。</p></div>
+    <div><p class="eyebrow">本机控制台</p><h1>暂时无法连接本机控制台</h1><p>请确认控制台仍在运行，然后刷新页面。若已关闭，请运行 <code>npm run remote-device:dashboard</code>。</p><button id="session-retry" type="button">刷新页面</button></div>
   </div>
 </body>
 </html>

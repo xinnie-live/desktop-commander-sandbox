@@ -10,7 +10,7 @@ import { StringDecoder } from 'node:string_decoder';
 import { fileURLToPath } from 'node:url';
 import { normalizeProxyUrl, proxyUrlForContainer, readSystemProxy } from './system-proxy.mjs';
 import { confirmApply, printHelp, printMapping, runTerminalCli } from './console-cli.mjs';
-import { openConsoleUrl, readSmallJsonBody, safeTokenEqual, sanitizePublicValue, securityHeaders } from './console-http.mjs';
+import { consolePort, openConsoleUrl, readSmallJsonBody, safeTokenEqual, sanitizePublicValue, securityHeaders } from './console-http.mjs';
 import { cleanLogText, parseComposeJson, parseDockerStats, parseFixedDuOutput } from './docker-output.mjs';
 import {
   isOwnedRunLog,
@@ -2001,6 +2001,7 @@ async function stopThroughController(url) {
 }
 
 async function startDashboard({ openBrowser = true } = {}) {
+  const requestedPort = consolePort();
   const token = randomBytes(32).toString('base64url');
   const staticContent = new Map();
   for (const [route, [filename, contentType]] of STATIC_FILES) {
@@ -2041,8 +2042,27 @@ async function startDashboard({ openBrowser = true } = {}) {
       const sourceValid = (!origin || origin === `http://${expectedHost}`)
         && (!fetchSite || fetchSite === 'same-origin' || fetchSite === 'none')
         && req.headers['x-console-request'] === 'desktop-commander-sandbox';
+      // Bootstrap only from a fetch made by this console's own page. No CORS
+      // preflight, cross-origin request, navigation or form submission can qualify.
+      // The token remains per-process and is never persisted by the browser.
+      if (url.pathname === '/api/session') {
+        const bootstrapAllowed = sourceValid && origin === `http://${expectedHost}`
+          && (!fetchSite || fetchSite === 'same-origin')
+          && (!req.headers['sec-fetch-mode'] || ['cors', 'same-origin'].includes(req.headers['sec-fetch-mode']))
+          && (!req.headers['sec-fetch-dest'] || req.headers['sec-fetch-dest'] === 'empty');
+        if (req.method !== 'POST' || url.search || !bootstrapAllowed) {
+          json(res, 403, { error: '本地会话请求来源不匹配。' });
+          return;
+        }
+        try {
+          const body = await readSmallJsonBody(req);
+          if (Object.keys(body).length) throw new Error('本地会话请求不接受参数。');
+          json(res, 200, { token });
+        } catch (error) { json(res, 400, { error: error.message }); }
+        return;
+      }
       if (!safeTokenEqual(candidate, token) || !sourceValid) {
-        json(res, 403, { error: '本地会话无效或请求来源不匹配。请使用启动控制台的终端中显示的链接重新打开。' });
+        json(res, 403, { error: '本地会话无效或请求来源不匹配。请刷新本机控制台页面。' });
         return;
       }
 
@@ -2391,8 +2411,10 @@ async function startDashboard({ openBrowser = true } = {}) {
   });
 
   await new Promise((resolveListen, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
+    server.once('error', (error) => reject(error.code === 'EADDRINUSE'
+      ? new Error(`Local console port ${requestedPort} is already in use. Close the other console, or set REMOTE_DEVICE_CONSOLE_PORT to a different fixed port.`)
+      : error));
+    server.listen(requestedPort, '127.0.0.1', () => {
       port = server.address().port;
       resolveListen();
     });
@@ -2403,7 +2425,7 @@ async function startDashboard({ openBrowser = true } = {}) {
   await writeFile(join(CONTROLLER_DIRECTORY, 'owner.json'), JSON.stringify({ pid: process.pid, url }), { mode: 0o600 });
   console.log(`Desktop Commander Sandbox console: ${url}`);
   console.log(`Project: ${PROJECT} · Press Ctrl+C to close the console`);
-  if (openBrowser) openConsoleUrl(url);
+  if (openBrowser) openConsoleUrl(`http://127.0.0.1:${port}/`);
 
   const shutdown = () => {
     if (shuttingDown) return;

@@ -34,7 +34,7 @@ test('CLI and web share validated workspace profiles and apply one running-devic
   const proxyLog = join(root, 'proxy-observed');
   const profileFile = join(config, 'desktop-commander-sandbox', 'workspace-profiles.json');
   const env = {
-    ...process.env,
+    ...process.env, REMOTE_DEVICE_CONSOLE_PORT: '0',
     REMOTE_DEVICE_SANDBOX_CONFIG_HOME: config,
     REMOTE_DEVICE_SANDBOX_LOG_HOME: logs,
     RDS_CLI_STATE: state,
@@ -286,7 +286,7 @@ test('parallel CLI profile edits never report success for a lost change', async 
       deviceProject: 'rds-concurrent-test',
       workspaces: { default: { label: 'default', directory: main, readOnly: true, mounts: [] } },
     })}\n`);
-    const env = { ...process.env, REMOTE_DEVICE_SANDBOX_LOG_HOME: join(config, 'test-logs'), REMOTE_DEVICE_SANDBOX_CONFIG_HOME: config };
+    const env = { ...process.env, REMOTE_DEVICE_CONSOLE_PORT: '0', REMOTE_DEVICE_SANDBOX_LOG_HOME: join(config, 'test-logs'), REMOTE_DEVICE_SANDBOX_CONFIG_HOME: config };
     delete env.REMOTE_DEVICE_PROJECT;
     delete env.REMOTE_DEVICE_WORKSPACE;
     const results = await Promise.all(Array.from({ length: 8 }, async (_, index) => {
@@ -359,7 +359,7 @@ case " $* " in
 esac
 `, { mode: 0o700 });
     await chmod(docker, 0o700);
-    const env = { ...process.env, REMOTE_DEVICE_SANDBOX_LOG_HOME: join(config, 'test-logs'), REMOTE_DEVICE_SANDBOX_CONFIG_HOME: config,
+    const env = { ...process.env, REMOTE_DEVICE_CONSOLE_PORT: '0', REMOTE_DEVICE_SANDBOX_LOG_HOME: join(config, 'test-logs'), REMOTE_DEVICE_SANDBOX_CONFIG_HOME: config,
       RDS_TRANSITION_STATE: state, RDS_TRANSITION_CALLS: calls, RDS_TRANSITION_RELEASE: release,
       PATH: `${bin}:${process.env.PATH || ''}` };
     delete env.REMOTE_DEVICE_PROJECT;

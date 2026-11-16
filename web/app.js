@@ -174,20 +174,20 @@ $('#language-toggle').addEventListener('click', () => queueMicrotask(() => {
 renderCurrentLogPreview();
 setFixedLogMessage('读取日志后显示内容。');
 
-function loadSessionToken() {
-  const fragment = new URLSearchParams(location.hash.slice(1));
-  const linkToken = fragment.get('session');
-  if (linkToken) {
-    sessionStorage.setItem('rds-local-session', linkToken);
-    history.replaceState(null, document.title, location.pathname);
-    return linkToken;
+async function loadSessionToken() {
+  // Discard the legacy URL/tab credential. A fresh tab or another browser can
+  // establish its own in-memory session through the guarded same-origin route.
+  if (location.hash) history.replaceState(null, document.title, location.pathname);
+  try { sessionStorage.removeItem('rds-local-session'); } catch { /* Storage is optional. */ }
+  const session = await api('/api/session', { method: 'POST' });
+  if (typeof session.token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(session.token)) {
+    throw new Error('本地控制台会话无法建立，请刷新页面重试。');
   }
-  return sessionStorage.getItem('rds-local-session') || '';
+  return session.token;
 }
 
 function lockPage() {
   token = '';
-  sessionStorage.removeItem('rds-local-session');
   lock.hidden = false;
 }
 
@@ -2055,10 +2055,11 @@ $('#logs-open-button').addEventListener('click', () => {
   openDialog(logsDialog);
   loadRunHistory({ preferCurrent: true });
 });
+$('#session-retry').addEventListener('click', () => location.reload());
 $('#logs-refresh').addEventListener('click', loadRunHistory);
 $('#logs-close').addEventListener('click', () => logsDialog.close());
 
-token = loadSessionToken();
+try { token = await loadSessionToken(); } catch { lockPage(); }
 if (!token) {
   lockPage();
 } else {

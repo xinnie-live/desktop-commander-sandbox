@@ -29,7 +29,7 @@ test('read-only commands do not generate mount overrides and saved unsafe mounts
   const callLog = join(temp, 'docker-calls.txt');
   const profileFile = join(config, 'desktop-commander-sandbox', 'workspace-profiles.json');
   const environment = {
-    ...process.env,
+    ...process.env, REMOTE_DEVICE_CONSOLE_PORT: '0',
     REMOTE_DEVICE_SANDBOX_CONFIG_HOME: config,
     REMOTE_DEVICE_SANDBOX_LOG_HOME: logDirectory,
     RDS_TEST_DOCKER_CALLS: callLog,
