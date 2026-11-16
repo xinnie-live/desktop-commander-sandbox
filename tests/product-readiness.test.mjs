@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFile, mkdtemp, mkdir, copyFile, writeFile, rm } from 'node:fs/promises';
+import { readFile, readdir, mkdtemp, mkdir, copyFile, writeFile, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import { tmpdir } from 'node:os';
 import { test } from 'node:test';
 import { extractAuthorizationUrl } from '../scripts/run-log-security.mjs';
@@ -56,5 +56,24 @@ test('launcher checks prerequisites before opening dashboard and preserves failu
     }
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+
+test('release allowlist includes local module dependencies and every regression suite', async () => {
+  const packager = await readFile(new URL('scripts/package-release.mjs', ROOT), 'utf8');
+  const list = packager.match(/const CONTENTS = \[([\s\S]*?)\];/);
+  assert.ok(list, 'release packager must declare its allowlist');
+  const files = new Set([...list[1].matchAll(/'([^']+)'/g)].map(match => match[1]));
+  for (const file of files) {
+    if (!/\.(?:mjs|js)$/.test(file)) continue;
+    const source = await readFile(new URL(file, ROOT), 'utf8');
+    for (const match of source.matchAll(/(?:from\s*|import\s*\(\s*|import\s*)['"](\.{1,2}\/[^'"]+)['"]/g)) {
+      const dependency = posix.normalize(posix.join(posix.dirname(file), match[1]));
+      assert.ok(files.has(dependency), `${file} imports missing archive module ${dependency}`);
+    }
+  }
+  for (const suite of await readdir(new URL('tests/', ROOT))) {
+    if (suite.endsWith('.test.mjs')) assert.ok(files.has(`tests/${suite}`), `Missing regression suite: ${suite}`);
   }
 });
