@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { isSupportedNode } from './node-version.mjs';
 import { spawn } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { createServer, request as httpRequest } from 'node:http';
@@ -338,7 +339,7 @@ async function runDoctor() {
   const platformNames = { darwin: 'macOS', win32: 'Windows', linux: 'Linux' };
   const platform = platformNames[process.platform];
   const architecture = process.arch === 'x64' ? 'x86_64' : process.arch;
-  const supportedNode = Number(process.versions.node.split('.')[0]) >= 22;
+  const supportedNode = isSupportedNode(process.versions.node);
   const supportedPlatform = Boolean(platform);
   const supportedArchitecture = ['x64', 'arm64'].includes(process.arch);
   const supportedUser = !(process.platform === 'linux' && process.getuid?.() === 0);
@@ -354,8 +355,8 @@ async function runDoctor() {
   printDoctorCheck(
     'Node.js',
     supportedNode,
-    `${process.versions.node}${supportedNode ? '' : ' (22 or later required)'}`,
-    'Install Node.js 22 or later, then rerun npm run remote-device:doctor.',
+    `${process.versions.node}${supportedNode ? '' : ' (22.12.0 or later required)'}`,
+    'Install Node.js 22.12.0 or later, then rerun npm run remote-device:doctor.',
   );
   ready &&= supportedNode;
 
@@ -1516,13 +1517,13 @@ async function inspectFixedMountDirectories() {
 
 async function runDiagnostics() {
   const checks = [];
-  const nodeReady = Number(process.versions.node.split('.')[0]) >= 22;
+  const nodeReady = isSupportedNode(process.versions.node);
   checks.push({
     id: 'node',
     label: 'Node.js',
     status: nodeReady ? 'ok' : 'error',
-    detail: nodeReady ? `已安装 ${process.versions.node}` : `当前为 ${process.versions.node}；需要 22 或更高版本。`,
-    action: nodeReady ? '' : '安装 Node.js 22 或更高版本后重新打开控制台。',
+    detail: nodeReady ? `已安装 ${process.versions.node}` : `当前为 ${process.versions.node}；需要 22.12.0 或更高版本。`,
+    action: nodeReady ? '' : '安装 Node.js 22.12.0 或更高版本后重新打开控制台。',
   });
 
   const [docker, compose] = await Promise.all([

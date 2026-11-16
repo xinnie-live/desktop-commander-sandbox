@@ -42,6 +42,7 @@ test('launcher checks prerequisites before opening dashboard and preserves failu
   try {
     await mkdir(join(root, 'scripts'));
     await copyFile(new URL('../scripts/launch.mjs', import.meta.url), join(root, 'scripts/launch.mjs'));
+    await copyFile(new URL('../scripts/node-version.mjs', import.meta.url), join(root, 'scripts/node-version.mjs'));
     await writeFile(join(root, 'scripts/console.mjs'), `
       console.log(process.argv[2]);
       if (process.argv[2] === 'doctor') process.exit(Number(process.env.TRIAL_DOCTOR_EXIT));

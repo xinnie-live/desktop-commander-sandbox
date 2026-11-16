@@ -3,7 +3,7 @@
 **Let ChatGPT or Claude on the web work with your local files, organize documents, and run scripts — in a Docker sandbox with per-folder permissions for the host files you share.**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Node.js 22+](https://img.shields.io/badge/node-22%2B-339933)
+![Node.js 22.12.0+](https://img.shields.io/badge/node-22.12.0%2B-339933)
 ![Docker](https://img.shields.io/badge/docker-compose%202.24.1%2B-2496ED)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
@@ -18,7 +18,7 @@ A 13-second, 4K (3840 × 2160) walkthrough composed of current UI captures. Open
 
 ## Quick start
 
-Requirements: **Docker** with **Compose 2.24.1+**, and **Node.js 22+** (the host console has no npm dependencies).
+Requirements: **Docker** with **Compose 2.24.1+**, and **Node.js 22.12.0+** (the host console has no npm dependencies).
 
 Download and extract the project ZIP from [Releases](https://github.com/xinnie-live/desktop-commander-sandbox/releases). Double-click `start.command` on macOS or `start.cmd` on Windows, or run `sh start.sh` on Linux. The launcher checks prerequisites and opens the console. Before the first release, use the same scripts in the source directory.
 

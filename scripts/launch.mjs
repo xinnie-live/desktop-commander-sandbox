@@ -1,3 +1,4 @@
+import { isSupportedNode } from './node-version.mjs';
 import { spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,8 +27,8 @@ function run(command) {
   });
 }
 
-if (Number(process.versions.node.split('.')[0]) < 22) {
-  console.error('Node.js 22+ required. Install from https://nodejs.org/en/download');
+if (!isSupportedNode(process.versions.node)) {
+  console.error('Node.js 22.12.0+ required. Install from https://nodejs.org/en/download');
   process.exitCode = 1;
 } else {
   const result = await run('doctor');

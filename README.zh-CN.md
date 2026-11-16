@@ -3,7 +3,7 @@
 **让网页版 ChatGPT / Claude 处理你的本地文件、整理资料和运行脚本，由你选择哪些宿主机文件夹可访问，全部运行在加固的 Docker 沙箱里。**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![Node.js 22+](https://img.shields.io/badge/node-22%2B-339933)
+![Node.js 22.12.0+](https://img.shields.io/badge/node-22.12.0%2B-339933)
 ![Docker](https://img.shields.io/badge/docker-compose%202.24.1%2B-2496ED)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
@@ -18,7 +18,7 @@
 
 ## 快速开始
 
-环境要求：**Docker**（Compose **2.24.1+**）和 **Node.js 22+**。本机控制台不依赖任何 npm 包。
+环境要求：**Docker**（Compose **2.24.1+**）和 **Node.js 22.12.0+**。本机控制台不依赖任何 npm 包。
 
 从 [Releases](https://github.com/xinnie-live/desktop-commander-sandbox/releases) 下载项目 ZIP 并解压。macOS 双击 `start.command`，Windows 双击 `start.cmd`，Linux 运行 `sh start.sh`。启动器检查环境后打开控制台。首次发布前，可使用源码目录中的同名脚本。
 
