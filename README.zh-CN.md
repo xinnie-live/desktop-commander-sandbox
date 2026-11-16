@@ -92,7 +92,7 @@ flowchart LR
 
 | 宿主环境 | 状态 |
 |---|---|
-| macOS + OrbStack（arm64） | 安全修复后的本机回归与 Docker 合成检查通过；历史配对/升级验收尚未在此修订上重做。 |
+| macOS + OrbStack（arm64） | 0.1.0 候选版：离线/Docker 合成检查、手动配对、云端合成读写、只读保护、UI 权限修改及镜像替换重连通过。原生目录选择器由维护者确认此前已验收，本次自动化会话未重复执行。 |
 | macOS + Docker Desktop | ⚠️ 预期可用，尚未验证 |
 | Linux x86_64（Docker Engine） | 宿主回归与合成容器检查通过，范围见下文。所选文件夹需要允许当前用户的主组访问。 |
 | Windows + Docker Desktop（WSL 2） | 容器运行未验证 |

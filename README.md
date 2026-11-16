@@ -92,7 +92,7 @@ Prebuilt images are Linux container images, not OrbStack-specific installers. Th
 
 | Host | Status |
 |---|---|
-| macOS + OrbStack (arm64) | Local regression and synthetic Docker checks passed after the security fixes; earlier pairing/upgrade acceptance has not been repeated on this revision. |
+| macOS + OrbStack (arm64) | 0.1.0 candidate: offline/synthetic Docker checks, manually approved pairing, cloud synthetic read/write, read-only enforcement, UI permission changes and image replacement/reconnection passed. Native folder selection was previously accepted by the maintainer; it was not repeated in this automation session. |
 | macOS + Docker Desktop | ⚠️ Expected to work, not yet verified |
 | Linux x86_64 (Docker Engine) | Host regressions and synthetic container checks passed; see scope below. Selected folders require primary-group access. |
 | Windows + Docker Desktop (WSL 2) | Container runtime unverified |
