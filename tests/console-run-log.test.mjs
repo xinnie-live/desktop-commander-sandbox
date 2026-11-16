@@ -61,7 +61,7 @@ const mock = `#!/bin/sh\nprintf '%s\\n' "$*" >> "$RDS_RUNLOG_CALLS"\ncase "$*" i
   // no longer recursively changes permissions on behalf of callers.
   await chmod(WORKSPACE_DIR, 0o770);
   testEnv = {
-    ...process.env,
+    ...process.env, REMOTE_DEVICE_CONSOLE_PORT: '0',
     REMOTE_DEVICE_SANDBOX_CONFIG_HOME: join(testRoot, 'config'),
     REMOTE_DEVICE_SANDBOX_LOG_HOME: join(testRoot, 'logs'),
     MOCK_DOCKER_LARGE_OUTPUT: largeOutput ? '1' : '0',

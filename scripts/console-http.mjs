@@ -3,6 +3,16 @@
 import { spawn } from 'node:child_process';
 import { timingSafeEqual } from 'node:crypto';
 
+export const DEFAULT_CONSOLE_PORT = 53707;
+
+export function consolePort(value = process.env.REMOTE_DEVICE_CONSOLE_PORT) {
+  if (value === undefined) return DEFAULT_CONSOLE_PORT;
+  if (!/^(0|[1-9][0-9]{0,4})$/.test(value) || Number(value) > 65535) {
+    throw new Error('REMOTE_DEVICE_CONSOLE_PORT must be an integer between 0 and 65535 (0 is for isolated tests).');
+  }
+  return Number(value);
+}
+
 export function sanitizePublicValue(value, redactText, allowLocalPaths = false, allowRawLogText = false) {
   if (typeof value === 'string') return allowRawLogText ? value : redactText(value);
   if (Array.isArray(value)) return value.map((item) => sanitizePublicValue(item, redactText, allowLocalPaths, allowRawLogText));

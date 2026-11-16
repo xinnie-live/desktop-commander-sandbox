@@ -75,7 +75,11 @@ npm run remote-device:doctor      # read-only check of Node.js, Docker, Compose 
 npm run remote-device:dashboard   # prints a local URL and opens it in your browser
 ```
 
-The URL works only on this machine and expires when the console process exits. Start the console from a terminal in your desktop session: the native folder picker cannot open from SSH, background services or restricted automation shells. If the picker fails, restart the console from a desktop terminal and use the new URL.
+The default address is **http://127.0.0.1:53707/**. You can bookmark it or open it in a new tab or another local browser while the console is running. The page automatically obtains a fresh in-memory session through a same-origin request; no password, copied URL credential or browser storage is needed. Reload open tabs after restarting the console. API requests still require the per-start token and Host/Origin checks; other websites cannot request a session through CORS.
+
+If the port is occupied, startup reports an error instead of silently changing the address. Set `REMOTE_DEVICE_CONSOLE_PORT` in the host shell to another fixed port when running multiple independent controllers (PowerShell: `$env:REMOTE_DEVICE_CONSOLE_PORT="53708"`; macOS/Linux: `export REMOTE_DEVICE_CONSOLE_PORT=53708`). Port `0` is reserved for isolated tests that need an automatically assigned port. Reopening a dashboard for the same project reuses its running controller.
+
+Start the console from a terminal in your desktop session: the native folder picker cannot open from SSH, background services or restricted automation shells. If the picker fails, restart the console from a desktop terminal.
 
 The UI follows your browser language (Chinese or English); use the header button to switch.
 

@@ -134,7 +134,7 @@ esac
     await chmod(fakeDocker, 0o700);
 
     const env = {
-      ...process.env,
+      ...process.env, REMOTE_DEVICE_CONSOLE_PORT: '0',
       PATH: `${bin}:${process.env.PATH || ''}`,
       REMOTE_DEVICE_SANDBOX_CONFIG_HOME: configHome,
       REMOTE_DEVICE_SANDBOX_LOG_HOME: join(temp, 'application-logs'),

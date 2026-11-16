@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+- Use a fixed local console address (127.0.0.1:53707 by default) and guarded same-origin session setup so fresh tabs work without copying a credential. Keep per-start tokens and reject cross-origin requests; report port conflicts instead of silently choosing a new port.
+- Show the console’s D mark as the browser tab favicon.
+
 ### Added
 
 - A manual release rehearsal that validates source attachments and both native image architectures without publishing images or a Release. Release metadata checks reject package, lockfile, Compose, changelog and tag drift.
