@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.0]
+
+First distribution version. Platform acceptance limits in the README apply.
+
 - Use a fixed local console address (127.0.0.1:53707 by default) and guarded same-origin session setup so fresh tabs work without copying a credential. Keep per-start tokens and reject cross-origin requests; report port conflicts instead of silently choosing a new port.
 - Show the console’s D mark as the browser tab favicon.
 
@@ -53,6 +57,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Simplify the bilingual quick start and document image upgrades, connector setup, and device revocation.
 
 ### Validation
+
+- 2026-11-16: source and clean archive tests passed (84/84), with cross-platform CI and native amd64/arm64 publication-free rehearsals. Fixed an omitted launcher dependency in the source archive and added archive dependency/test coverage checks. On macOS arm64 with OrbStack, a dedicated device passed manual pairing, cloud synthetic read/write, read-only rejection, a single restart per UI permission change, stop/volume retention and development-image-to-candidate reconnection. Native folder selection was previously accepted by the maintainer; Windows/Linux desktop cloud flows remain outside this acceptance.
 
 - 2026-11-15 review: 69 offline tests and host Compose lifecycle checks passed. A network-disabled synthetic service reproduced the old Compose exit 0 versus container exit 7; `--exit-code-from remote-device` returned 7. Actual cloud pairing expiry has not been replayed. Browser checks at 1440, 390, and 320 CSS pixels found aligned left edges and no horizontal page overflow; the full remaining acceptance matrix is still open.
 
