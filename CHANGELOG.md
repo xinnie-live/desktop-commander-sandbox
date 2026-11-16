@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.0]
+
+Release candidate; not yet published. Platform acceptance limits in the README still apply.
+
 - Use a fixed local console address (127.0.0.1:53707 by default) and guarded same-origin session setup so fresh tabs work without copying a credential. Keep per-start tokens and reject cross-origin requests; report port conflicts instead of silently choosing a new port.
 - Show the console’s D mark as the browser tab favicon.
 
